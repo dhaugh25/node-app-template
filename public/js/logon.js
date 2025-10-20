@@ -43,6 +43,7 @@ logonForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
+    const rememberMe = document.getElementBy('rememberMe').checked;
 
     try {
         const response = await fetch('/api/login', {
@@ -52,8 +53,15 @@ logonForm.addEventListener('submit', async (event) => {
         });
 
         const result = await response.json();
-        if (response.ok) {
-            localStorage.setItem('jwtToken', result.token);
+        if (response.ok && result.token) {
+
+            // store token differently based on 'remember me'
+            if (rememberMe) {
+                localStorage.setItem('jwtToken', result.token);// persists after browser close
+            }else{
+                sessionStorage.setItem('jwtToken', result.token);// closing browser clears data
+            }
+
             window.location.href = '/dashboard';
         } else {
             messageEl.textContent = result.message;

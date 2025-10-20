@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initial check for the token
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
     if (!token) {
         window.location.href = '/';
     } else {
