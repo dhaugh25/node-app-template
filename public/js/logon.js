@@ -4,6 +4,25 @@ const createAccountTab = document.getElementById('create-account-tab');
 const logonForm = document.getElementById('logon-form');
 const createAccountForm = document.getElementById('create-account-form');
 const messageEl = document.getElementById('message');
+// Show a logout message if one was set
+const logoutMsg = localStorage.getItem('logoutMessage');
+if (logoutMsg) {
+    const messageEl = document.getElementById('message');
+    messageEl.textContent = logoutMsg;
+    messageEl.classList.add('success', 'fade-message');
+
+    // Automatically hide after 3 seconds
+    setTimeout(() => {
+        messageEl.classList.add('fade-out');
+        setTimeout(() => {
+            messageEl.textContent = '';
+            messageEl.classList.remove('success', 'fade-message', 'fade-out');
+        }, 500); // time for fade-out transition
+    }, 3000);
+
+    // Clear the flag so it only shows once
+    localStorage.removeItem('logoutMessage');
+}
 
 loginTab.addEventListener('click', () => {
     logonForm.classList.add('active-form');

@@ -24,7 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
     //////////////////////////////////////////
     // Log out and redirect to login
     logoutButton.addEventListener('click', () => {
-        localStorage.removeItem('token');
+        // Remove the stored JWT token
+        localStorage.removeItem('jwtToken');
+
+        // Set a short-lived flag in localStorage to show a logout message on the login page
+        localStorage.setItem('logoutMessage', 'You have been logged out successfully.');
+
+        // Redirect to the login page
         window.location.href = '/';
     });
 
