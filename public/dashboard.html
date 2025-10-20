@@ -13,11 +13,46 @@
             <div>
                 <button id="refreshButton">Refresh List</button>
                 <button id="logoutButton">Log Out</button>
+                <!-- New: notifications -->
+                <button id="notifyBtn">Enable Notifications</button>
             </div>
         </div>
         <div class="user-list" id="userList"></div>
     </div>
-    <script src="/js/dashboard.js"></script>
+
+    <!-- IMPORTANT: Load DataModel before dashboard.js -->
     <script src="/js/datamodel.js"></script>
+    <script src="/js/dashboard.js" type="module"></script>
+
+    <!-- Notifications wiring -->
+    <script type="module">
+      // Register the service worker so notifications can be shown by SW
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(console.error);
+      }
+
+      // Import the helpers
+      import { enableNotifications, notify } from "/js/notifications.js";
+
+      // Button handler
+      const notifyBtn = document.getElementById("notifyBtn");
+      if (notifyBtn) {
+        notifyBtn.addEventListener("click", async () => {
+          const ok = await enableNotifications();
+          if (ok) {
+            notify({
+              title: "Notifications enabled",
+              body: "You’ll get alerts from the app.",
+              tag: "welcome"
+            });
+          }
+        });
+      }
+
+      // Optional: greet if permission was already granted
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        notify({ title: "Welcome back!", body: "You’re signed in." });
+      }
+    </script>
 </body>
 </html>
