@@ -4,6 +4,9 @@
 // BETWEEN THE MODEL (datamodel.js) AND THE VIEW (dashboard.html)
 ////////////////////////////////////////////////////////////////
 
+// Import the notification helpers
+import { enableNotifications, notify } from "/js/notifications.js";
+
 
 //ADD ALL EVENT LISTENERS INSIDE DOMCONTENTLOADED
 //AT THE BOTTOM OF DOMCONTENTLOADED, ADD ANY CODE THAT NEEDS TO RUN IMMEDIATELY
@@ -14,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     //////////////////////////////////////////
     const logoutButton = document.getElementById('logoutButton');
     const refreshButton = document.getElementById('refreshButton');
+    const notifyBtn = document.getElementById('notifyBtn'); // Added for notifications
     //////////////////////////////////////////
     //END ELEMENTS TO ATTACH EVENT LISTENERS
     //////////////////////////////////////////
@@ -31,6 +35,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Refresh list when the button is clicked
     refreshButton.addEventListener('click', async () => {
         renderUserList();
+        // Optional notification on refresh
+        notify({ title: "Data refreshed", body: "User list updated." });
+    });
+
+    // Notifications button click listener
+    notifyBtn.addEventListener('click', async () => {
+        const ok = await enableNotifications();
+        if (ok) {
+            notify({
+                title: "Notifications enabled",
+                body: "You’ll get alerts from the app.",
+                tag: "welcome"
+            });
+        }
     });
     //////////////////////////////////////////
     //END EVENT LISTENERS
@@ -40,6 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
     //////////////////////////////////////////////////////
     //CODE THAT NEEDS TO RUN IMMEDIATELY AFTER PAGE LOADS
     //////////////////////////////////////////////////////
+    // Register the Service Worker for notifications
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(console.error);
+    }
+
     // Initial check for the token
     const token = localStorage.getItem('jwtToken');
     if (!token) {
@@ -47,6 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         DataModel.setToken(token);
         renderUserList();
+
+        // Optional: show welcome message if notifications are already granted
+        if (Notification.permission === "granted") {
+            notify({ title: "Welcome back!", body: "You’re signed in." });
+        }
     }
     //////////////////////////////////////////
     //END CODE THAT NEEDS TO RUN IMMEDIATELY AFTER PAGE LOADS
