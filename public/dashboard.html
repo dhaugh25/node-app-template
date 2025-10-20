@@ -14,7 +14,7 @@
                 <button id="refreshButton">Refresh List</button>
                 <button id="logoutButton">Log Out</button>
                 <!-- New: notifications -->
-                <button id="notifyBtn">Enable Notifications</button>
+                <button id="notifToggleBtn">Enable Notifications</button>
             </div>
         </div>
         <div class="user-list" id="userList"></div>
@@ -34,16 +34,33 @@
       // Import the helpers
       import { enableNotifications, notify } from "/js/notifications.js";
 
-      // Button handler
-      const notifyBtn = document.getElementById("notifyBtn");
-      if (notifyBtn) {
-        notifyBtn.addEventListener("click", async () => {
-          const ok = await enableNotifications();
-          if (ok) {
+      // Button toggle logic
+      const notifToggleBtn = document.getElementById("notifToggleBtn");
+      let notificationsEnabled = false;
+
+      if (notifToggleBtn) {
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          notificationsEnabled = true;
+          notifToggleBtn.textContent = "Disable Notifications";
+        }
+
+        notifToggleBtn.addEventListener("click", async () => {
+          if (!notificationsEnabled) {
+            const permission = await Notification.requestPermission();
+            if (permission === "granted") {
+              notificationsEnabled = true;
+              notifToggleBtn.textContent = "Disable Notifications";
+              notify({
+                title: "Notifications enabled",
+                body: "You’ll get alerts from the app."
+              });
+            }
+          } else {
+            notificationsEnabled = false;
+            notifToggleBtn.textContent = "Enable Notifications";
             notify({
-              title: "Notifications enabled",
-              body: "You’ll get alerts from the app.",
-              tag: "welcome"
+              title: "Notifications disabled",
+              body: "You will not receive alerts until re-enabled."
             });
           }
         });
