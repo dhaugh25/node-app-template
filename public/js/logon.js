@@ -1,9 +1,17 @@
-// Tab switching
+// Tab switching and message element
 const loginTab = document.getElementById('login-tab');
 const createAccountTab = document.getElementById('create-account-tab');
 const logonForm = document.getElementById('logon-form');
 const createAccountForm = document.getElementById('create-account-form');
 const messageEl = document.getElementById('message');
+
+// If token already exists (remembered session), bypass login
+const existingToken = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+if (existingToken) {
+    // Optionally: perform a lightweight server-side check before redirecting.
+    // For simplicity we redirect immediately:
+    window.location.href = '/dashboard';
+}
 
 // Show a logout message if one was set
 const logoutMsg = localStorage.getItem('logoutMessage');
@@ -11,16 +19,14 @@ if (logoutMsg) {
     messageEl.textContent = logoutMsg;
     messageEl.classList.add('success', 'fade-message');
 
-    // Automatically hide after 3 seconds
     setTimeout(() => {
         messageEl.classList.add('fade-out');
         setTimeout(() => {
             messageEl.textContent = '';
             messageEl.classList.remove('success', 'fade-message', 'fade-out');
-        }, 500); // time for fade-out transition
+        }, 500);
     }, 3000);
 
-    // Clear the flag so it only shows once
     localStorage.removeItem('logoutMessage');
 }
 
@@ -43,7 +49,6 @@ logonForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
-    // FIX: correctly get the checkbox element
     const rememberMeCheckbox = document.getElementById('rememberMe');
     const rememberMe = rememberMeCheckbox ? rememberMeCheckbox.checked : false;
 
@@ -56,16 +61,14 @@ logonForm.addEventListener('submit', async (event) => {
 
         const result = await response.json();
         if (response.ok && result.token) {
-            // Save token where dashboard expects it (localStorage)
-            localStorage.setItem('jwtToken', result.token);
-
-            // Also save to sessionStorage if the user DID NOT choose "remember me"
-            // (this is optional, but ensures sessions behave as expected)
-            if (!rememberMe) {
-                sessionStorage.setItem('jwtToken', result.token);
+            // If user asked to be remembered, save in localStorage (persists across restarts)
+            if (rememberMe) {
+                localStorage.setItem('jwtToken', result.token);
+                sessionStorage.removeItem('jwtToken'); // clear any session fallback
             } else {
-                // if rememberMe checked, ensure sessionStorage does not contain a stale token
-                sessionStorage.removeItem('jwtToken');
+                // Otherwise, keep the token only in sessionStorage (cleared on browser/tab close)
+                sessionStorage.setItem('jwtToken', result.token);
+                localStorage.removeItem('jwtToken');
             }
 
             window.location.href = '/dashboard';
@@ -80,7 +83,7 @@ logonForm.addEventListener('submit', async (event) => {
     }
 });
 
-// Create account form submission
+// Create account form submission (unchanged)
 createAccountForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('create-email').value;

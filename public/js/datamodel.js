@@ -39,12 +39,11 @@ const DataModel = (function () {
             }
 
             try {
-                // this is our call to the /api/users route on the server
+                // send the token with Bearer prefix
                 const response = await fetch('/api/users', {
                     method: 'GET',
                     headers: {
-                        // we need to send the token in the headers
-                        'Authorization': token,
+                        'Authorization': 'Bearer ' + token,
                         'Content-Type': 'application/json',
                     },
                 });
