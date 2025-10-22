@@ -4,10 +4,10 @@ const createAccountTab = document.getElementById('create-account-tab');
 const logonForm = document.getElementById('logon-form');
 const createAccountForm = document.getElementById('create-account-form');
 const messageEl = document.getElementById('message');
+
 // Show a logout message if one was set
 const logoutMsg = localStorage.getItem('logoutMessage');
 if (logoutMsg) {
-    const messageEl = document.getElementById('message');
     messageEl.textContent = logoutMsg;
     messageEl.classList.add('success', 'fade-message');
 
@@ -43,7 +43,9 @@ logonForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
-    const rememberMe = document.getElementBy('rememberMe').checked;
+    // FIX: correctly get the checkbox element
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+    const rememberMe = rememberMeCheckbox ? rememberMeCheckbox.checked : false;
 
     try {
         const response = await fetch('/api/login', {
@@ -54,17 +56,21 @@ logonForm.addEventListener('submit', async (event) => {
 
         const result = await response.json();
         if (response.ok && result.token) {
+            // Save token where dashboard expects it (localStorage)
+            localStorage.setItem('jwtToken', result.token);
 
-            // store token differently based on 'remember me'
-            if (rememberMe) {
-                localStorage.setItem('jwtToken', result.token);// persists after browser close
-            }else{
-                sessionStorage.setItem('jwtToken', result.token);// closing browser clears data
+            // Also save to sessionStorage if the user DID NOT choose "remember me"
+            // (this is optional, but ensures sessions behave as expected)
+            if (!rememberMe) {
+                sessionStorage.setItem('jwtToken', result.token);
+            } else {
+                // if rememberMe checked, ensure sessionStorage does not contain a stale token
+                sessionStorage.removeItem('jwtToken');
             }
 
             window.location.href = '/dashboard';
         } else {
-            messageEl.textContent = result.message;
+            messageEl.textContent = result.message || 'Login failed';
             messageEl.classList.add('error');
         }
     } catch (error) {
