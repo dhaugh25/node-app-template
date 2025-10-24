@@ -1,102 +1,86 @@
-////////////////////////////////////////////////////////////////
-//DASHBOARD.JS
-//THIS IS YOUR "CONTROLLER", IT ACTS AS THE MIDDLEMAN
-// BETWEEN THE MODEL (datamodel.js) AND THE VIEW (dashboard.html)
-////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////
+// DASHBOARD.JS
+// CONTROLLER: connects model (datamodel.js) and view (dashboard.html)
+////////////////////////////////////////////////
 
-// Import the notification helpers
-import { enableNotifications, notify } from "/js/notifications.js";
+// NOTE: notification helpers are provided as globals by dashboard.html:
+// window.isNotificationsEnabled, window.enableNotifications, window.notify
 
-
-//ADD ALL EVENT LISTENERS INSIDE DOMCONTENTLOADED
-//AT THE BOTTOM OF DOMCONTENTLOADED, ADD ANY CODE THAT NEEDS TO RUN IMMEDIATELY
 document.addEventListener('DOMContentLoaded', () => {
-    
-    //////////////////////////////////////////
-    //ELEMENTS TO ATTACH EVENT LISTENERS
-    //////////////////////////////////////////
-    const logoutButton = document.getElementById('logoutButton');
-    const refreshButton = document.getElementById('refreshButton');
-    const notifyBtn = document.getElementById('notifyBtn'); // Added for notifications
-    //////////////////////////////////////////
-    //END ELEMENTS TO ATTACH EVENT LISTENERS
-    //////////////////////////////////////////
+  //////////////////////////////////////////
+  // ELEMENTS
+  //////////////////////////////////////////
+  const logoutButton = document.getElementById('logoutButton');
+  const refreshButton = document.getElementById('refreshButton');
+  const notifyToggleBtn = document.getElementById('notifToggleBtn'); // toggle lives in HTML
 
-
-    //////////////////////////////////////////
-    //EVENT LISTENERS
-    //////////////////////////////////////////
-    // Log out and redirect to login
-    logoutButton.addEventListener('click', () => {
-        localStorage.removeItem('token');
-        window.location.href = '/';
-    });
-
-    // Refresh list when the button is clicked
-    refreshButton.addEventListener('click', async () => {
-        renderUserList();
-        // Optional notification on refresh
-        notify({ title: "Data refreshed", body: "User list updated." });
-    });
-
-    // Notifications button click listener
-    notifyBtn.addEventListener('click', async () => {
-        const ok = await enableNotifications();
-        if (ok) {
-            notify({
-                title: "Notifications enabled",
-                body: "You’ll get alerts from the app.",
-                tag: "welcome"
-            });
-        }
-    });
-    //////////////////////////////////////////
-    //END EVENT LISTENERS
-    //////////////////////////////////////////
-
-
-    //////////////////////////////////////////////////////
-    //CODE THAT NEEDS TO RUN IMMEDIATELY AFTER PAGE LOADS
-    //////////////////////////////////////////////////////
-    // Register the Service Worker for notifications
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js").catch(console.error);
+  //////////////////////////////////////////
+  // EVENT LISTENERS
+  //////////////////////////////////////////
+  // Log out and redirect to login - clear both storages
+  logoutButton?.addEventListener('click', () => {
+    try {
+      localStorage.removeItem('jwtToken');
+      sessionStorage.removeItem('jwtToken');
+      localStorage.setItem('logoutMessage', 'You have been logged out successfully.');
+    } finally {
+      window.location.href = '/';
     }
+  });
 
-    // Initial check for the token
-    const token = localStorage.getItem('jwtToken');
-    if (!token) {
-        window.location.href = '/';
-    } else {
-        DataModel.setToken(token);
-        renderUserList();
-
-        // Optional: show welcome message if notifications are already granted
-        if (Notification.permission === "granted") {
-            notify({ title: "Welcome back!", body: "You’re signed in." });
-        }
+  // Refresh list when the button is clicked (with gated notifications)
+  refreshButton?.addEventListener('click', async () => {
+    try {
+      await renderUserList();
+      if (window.isNotificationsEnabled && window.isNotificationsEnabled()) {
+        window.notify && window.notify({ title: 'Data refreshed', body: 'User list updated.' });
+      }
+    } catch (err) {
+      console.error('Failed to refresh users:', err);
     }
-    //////////////////////////////////////////
-    //END CODE THAT NEEDS TO RUN IMMEDIATELY AFTER PAGE LOADS
-    //////////////////////////////////////////
+  });
+
+  // NOTE: Notification toggle is handled in dashboard.html; no handler here
+
+  //////////////////////////////////////////////////////
+  // CODE THAT NEEDS TO RUN IMMEDIATELY AFTER PAGE LOADS
+  //////////////////////////////////////////////////////
+  // (dashboard.html also registers the SW; duplicate is harmless but we'll skip here)
+
+  // Initial check for the token (either storage)
+  const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+  if (!token) {
+    window.location.href = '/';
+    return;
+  }
+
+  DataModel.setToken(token);
+  renderUserList();
+
+  // Show welcome only if notifications truly enabled
+  if (window.isNotificationsEnabled && window.isNotificationsEnabled()) {
+    window.notify && window.notify({ title: 'Welcome back!', body: "You’re signed in." });
+  }
 });
-//END OF DOMCONTENTLOADED
-
 
 //////////////////////////////////////////
-//FUNCTIONS TO MANIPULATE THE DOM
+// FUNCTIONS TO MANIPULATE THE DOM
 //////////////////////////////////////////
 async function renderUserList() {
-    const userListElement = document.getElementById('userList');
-    userListElement.innerHTML = '<div class="loading-message">Loading user list...</div>';
-    const users = await DataModel.getUsers(); 
-    users.forEach(user => {
-        const userItem = document.createElement('div');
-        userItem.classList.add('user-item');
-        userItem.textContent = user;
-        userListElement.appendChild(userItem);
+  const userListElement = document.getElementById('userList');
+  if (!userListElement) return;
+  userListElement.innerHTML = '<div class="loading-message">Loading user list...</div>';
+  try {
+    const users = await DataModel.getUsers();
+    userListElement.innerHTML = '';
+    (users || []).forEach(user => {
+      const userItem = document.createElement('div');
+      userItem.classList.add('user-item');
+      userItem.textContent = user;
+      userListElement.appendChild(userItem);
     });
+  } catch (e) {
+    console.error('Error loading users:', e);
+    userListElement.innerHTML = '<div class="error-message">Failed to load users.</div>';
+  }
 }
-//////////////////////////////////////////
-//END FUNCTIONS TO MANIPULATE THE DOM
-//////////////////////////////////////////

@@ -1,9 +1,34 @@
-// Tab switching
+// Tab switching and message element
 const loginTab = document.getElementById('login-tab');
 const createAccountTab = document.getElementById('create-account-tab');
 const logonForm = document.getElementById('logon-form');
 const createAccountForm = document.getElementById('create-account-form');
 const messageEl = document.getElementById('message');
+
+// If token already exists (remembered session), bypass login
+const existingToken = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+if (existingToken) {
+    // Optionally: perform a lightweight server-side check before redirecting.
+    // For simplicity we redirect immediately:
+    window.location.href = '/dashboard';
+}
+
+// Show a logout message if one was set
+const logoutMsg = localStorage.getItem('logoutMessage');
+if (logoutMsg) {
+    messageEl.textContent = logoutMsg;
+    messageEl.classList.add('success', 'fade-message');
+
+    setTimeout(() => {
+        messageEl.classList.add('fade-out');
+        setTimeout(() => {
+            messageEl.textContent = '';
+            messageEl.classList.remove('success', 'fade-message', 'fade-out');
+        }, 500);
+    }, 3000);
+
+    localStorage.removeItem('logoutMessage');
+}
 
 loginTab.addEventListener('click', () => {
     logonForm.classList.add('active-form');
@@ -24,6 +49,8 @@ logonForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+    const rememberMe = rememberMeCheckbox ? rememberMeCheckbox.checked : false;
 
     try {
         const response = await fetch('/api/login', {
@@ -33,11 +60,20 @@ logonForm.addEventListener('submit', async (event) => {
         });
 
         const result = await response.json();
-        if (response.ok) {
-            localStorage.setItem('jwtToken', result.token);
+        if (response.ok && result.token) {
+            // If user asked to be remembered, save in localStorage (persists across restarts)
+            if (rememberMe) {
+                localStorage.setItem('jwtToken', result.token);
+                sessionStorage.removeItem('jwtToken'); // clear any session fallback
+            } else {
+                // Otherwise, keep the token only in sessionStorage (cleared on browser/tab close)
+                sessionStorage.setItem('jwtToken', result.token);
+                localStorage.removeItem('jwtToken');
+            }
+
             window.location.href = '/dashboard';
         } else {
-            messageEl.textContent = result.message;
+            messageEl.textContent = result.message || 'Login failed';
             messageEl.classList.add('error');
         }
     } catch (error) {
@@ -47,7 +83,7 @@ logonForm.addEventListener('submit', async (event) => {
     }
 });
 
-// Create account form submission
+// Create account form submission (unchanged)
 createAccountForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = document.getElementById('create-email').value;
