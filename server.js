@@ -180,6 +180,95 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 //////////////////////////////////////
 
 
+
+// =======================================================================
+//                      NOTIFICATION PREFERENCES (ADDED)
+// =======================================================================
+//
+// Requires the following columns in your `user` table:
+//   notifications_enabled TINYINT(1) NOT NULL DEFAULT 1
+//   notifications_paused_until DATETIME NULL
+//
+// SQL to add (run once):
+// ALTER TABLE user
+//   ADD COLUMN notifications_enabled TINYINT(1) NOT NULL DEFAULT 1,
+//   ADD COLUMN notifications_paused_until DATETIME NULL;
+// =======================================================================
+
+// Helper (optional): server-side check for push workflows
+function notificationsAllowed(prefs) {
+    if (!prefs?.enabled) return false;
+    if (!prefs?.pausedUntil) return true;
+    return new Date(prefs.pausedUntil) <= new Date();
+}
+
+// GET current user's notification preferences
+app.get('/api/notifications/prefs', authenticateToken, async (req, res) => {
+    try {
+        const email = req.user?.email;
+        if (!email) return res.status(401).json({ message: 'No user in auth context' });
+
+        const conn = await createConnection();
+        const [rows] = await conn.execute(
+            'SELECT notifications_enabled, notifications_paused_until FROM user WHERE email = ?',
+            [email]
+        );
+        await conn.end();
+
+        if (!rows.length) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({
+            enabled: !!rows[0].notifications_enabled,
+            pausedUntil: rows[0].notifications_paused_until, // may be null
+            serverTime: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('[notifications] GET prefs failed:', err);
+        res.status(500).json({ message: 'Failed to load notification prefs' });
+    }
+});
+
+// PUT update current user's notification preferences
+app.put('/api/notifications/prefs', authenticateToken, async (req, res) => {
+    try {
+        const email = req.user?.email;
+        if (!email) return res.status(401).json({ message: 'No user in auth context' });
+
+        const { enabled, pausedUntil } = req.body;
+
+        const enableVal = enabled === undefined ? 1 : (enabled ? 1 : 0);
+
+        // Convert pausedUntil (ISO or local string) -> MySQL DATETIME or null
+        let pauseVal = null;
+        if (pausedUntil) {
+            const dt = new Date(pausedUntil);
+            if (!isNaN(dt.getTime())) {
+                pauseVal = dt.toISOString().slice(0, 19).replace('T', ' ');
+            }
+        }
+
+        const conn = await createConnection();
+        await conn.execute(
+            'UPDATE user SET notifications_enabled = ?, notifications_paused_until = ? WHERE email = ?',
+            [enableVal, pauseVal, email]
+        );
+        await conn.end();
+
+        res.json({ message: 'Preferences updated', enabled: !!enableVal, pausedUntil: pauseVal });
+    } catch (err) {
+        console.error('[notifications] PUT prefs failed:', err);
+        res.status(500).json({ message: 'Failed to update notification prefs' });
+    }
+});
+
+// Expose helper if needed elsewhere
+app.locals.notificationsAllowed = notificationsAllowed;
+// =======================================================================
+
+
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

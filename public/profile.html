@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Profile & Preferences</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header" style="display:flex; align-items:center; justify-content:space-between;">
+      <h1>Profile & Preferences</h1>
+      <nav style="display:flex; gap:.75rem;">
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/login.html">Log out</a>
+      </nav>
+    </div>
+
+    <section class="card" style="padding:1rem; border:1px solid #ddd; border-radius:.75rem; max-width:520px;">
+      <h2>Notifications</h2>
+      <p>Control in-app/browser notifications.</p>
+
+      <div style="display:flex; flex-direction:column; gap:.75rem;">
+        <label style="display:flex; align-items:center; gap:.5rem;">
+          <input type="checkbox" id="notifToggle" />
+          Notifications enabled
+        </label>
+
+        <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;">
+          <input type="datetime-local" id="pauseUntilInput" />
+          <button id="applyPauseBtn" type="button">Pause until</button>
+          <button id="clearPauseBtn" type="button">Clear pause</button>
+        </div>
+
+        <button id="askBrowserPermBtn" type="button">Allow browser notifications</button>
+
+        <p id="nextStatus" style="margin-top:.25rem; font-size:.9rem; opacity:.8;"></p>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/datamodel.js"></script>
+  <script src="/js/profile.js"></script>
+</body>
+</html>

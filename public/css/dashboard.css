@@ -64,3 +64,60 @@ h1 {
     padding: 10px;
     border-bottom: 1px solid #ddd;
 }
+
+/* ===========================================================
+   NOTIFICATION CONTROLS (APPENDED)
+   =========================================================== */
+
+.notif-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.notif-controls label {
+    font-size: 14px;
+    color: #333;
+}
+
+.notif-controls input[type="datetime-local"] {
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.notif-controls button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background-color: #f7f7f7;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.notif-controls button:hover {
+    background-color: #e9e9e9;
+    transform: scale(1.03);
+}
+
+.notif-controls button:disabled {
+    background-color: #f1f1f1;
+    color: #888;
+    cursor: not-allowed;
+}
+
+#askBrowserPermBtn {
+    background-color: #ffc107;
+    border: none;
+    color: #212529;
+    font-weight: 600;
+}
+
+#askBrowserPermBtn:hover {
+    background-color: #e0a800;
+    color: white;
+}

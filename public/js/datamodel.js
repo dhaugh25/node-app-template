@@ -23,6 +23,20 @@ const DataModel = (function () {
     //USE THAT DATA TO UPDATE THE VIEW.  THE CONTROLLER CAN ALSO
     //SEND DATA TO THE SERVER TO BE STORED IN THE DATABASE BY
     //CALLING FUNCTIONS THAT WE DEFINE HERE.
+
+    // ---------------- NOTIFICATION PREFS (local cache) ----------------
+    let notifEnabled = true;          // current preference: enabled/disabled
+    let notifPausedUntil = null;      // Date or null (when pause lifts)
+    let notifServerTimeISO = null;    // last server time (ISO string)
+
+    function authHeaders() {
+        // NOTE: Your server expects the raw token in Authorization (not "Bearer ...")
+        return {
+            'Authorization': token,
+            'Content-Type': 'application/json',
+        };
+    }
+
     return {
         //utility function to store the token so that we
         //can use it later to make authenticated requests
@@ -65,6 +79,76 @@ const DataModel = (function () {
                 console.error("Error in API call:", error);
                 return [];
             }
+        },
+
+        // ---------------- NOTIFICATION PREFS API ----------------
+        // Load preferences from server and cache locally
+        getNotificationPrefs: async function () {
+            if (!token) {
+                console.error("Token is not set.");
+                return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
+            }
+            try {
+                const resp = await fetch('/api/notifications/prefs', {
+                    method: 'GET',
+                    headers: { 'Authorization': token }
+                });
+                if (!resp.ok) {
+                    console.error("Error fetching notification prefs:", await resp.json().catch(() => ({})));
+                    return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
+                }
+                const data = await resp.json();
+                notifEnabled = !!data.enabled;
+                notifPausedUntil = data.pausedUntil ? new Date(data.pausedUntil) : null;
+                notifServerTimeISO = data.serverTime || null;
+                return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
+            } catch (err) {
+                console.error("Error in notification prefs GET:", err);
+                return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
+            }
+        },
+
+        // Update preferences on server and update local cache
+        setNotificationPrefs: async function ({ enabled, pausedUntil }) {
+            if (!token) {
+                console.error("Token is not set.");
+                return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
+            }
+            try {
+                const body = { enabled, pausedUntil };
+                const resp = await fetch('/api/notifications/prefs', {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify(body)
+                });
+                if (!resp.ok) {
+                    console.error("Error updating notification prefs:", await resp.json().catch(() => ({})));
+                    return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
+                }
+                const data = await resp.json();
+                notifEnabled = !!data.enabled;
+                notifPausedUntil = data.pausedUntil ? new Date(data.pausedUntil) : null;
+                return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
+            } catch (err) {
+                console.error("Error in notification prefs PUT:", err);
+                return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
+            }
+        },
+
+        // Convenience helper for client-side gating of toasts, etc.
+        notificationsAllowedNow: function () {
+            if (!notifEnabled) return false;
+            if (!notifPausedUntil) return true;
+            return new Date(notifPausedUntil) <= new Date();
+        },
+
+        // You can expose raw state if needed by controllers
+        _notificationState: function () {
+            return {
+                enabled: notifEnabled,
+                pausedUntil: notifPausedUntil,
+                serverTime: notifServerTimeISO
+            };
         },
 
         //ADD MORE FUNCTIONS HERE TO FETCH DATA FROM THE SERVER
