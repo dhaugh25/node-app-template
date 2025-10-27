@@ -1,4 +1,4 @@
-// public/sw.js
+// public/sw.jsthe web
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(
