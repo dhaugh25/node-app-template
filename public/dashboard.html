@@ -15,6 +15,38 @@
                 <button id="logoutButton">Log Out</button>
                 <!-- New: notifications -->
                 <button id="notifToggleBtn">Enable Notifications</button>
+                <!-- Add Class button -->
+                <div class="add-class-area">
+                  <button id="openAddClassBtn" class="button">+ Add Class</button>
+                </div>
+
+                <!-- Add Class form (hidden by default) -->
+                <div id="addClassFormContainer" class="container" style="display:none; margin-top:20px;">
+                  <h3>Add a class</h3>
+                  <form id="addClassForm">
+                    <label for="courseName">Course name *</label>
+                    <input id="courseName" name="courseName" type="text" required />
+
+                    <label for="subject">Subject *</label>
+                    <input id="subject" name="subject" type="text" required />
+
+                    <label for="days">Days (comma-separated) *</label>
+                    <input id="days" name="days" type="text" placeholder="Mon,Wed,Fri" required />
+
+                    <label for="startTime">Start time *</label>
+                    <input id="startTime" name="startTime" type="time" required />
+
+                    <label for="endTime">End time *</label>
+                    <input id="endTime" name="endTime" type="time" required />
+
+                    <div style="margin-top:10px;">
+                      <button id="saveClassBtn" type="submit" class="button">Save</button>
+                      <button id="cancelAddClassBtn" type="button" class="button" style="background:#888;">Cancel</button>
+                    </div>
+
+                    <div id="classFormMessage" class="message" style="min-height:1.2em;"></div>
+                  </form>
+                </div>
             </div>
         </div>
         <div class="user-list" id="userList"></div>

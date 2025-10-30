@@ -121,3 +121,8 @@ h1 {
     background-color: #e0a800;
     color: white;
 }
+
+.add-class-area { margin: 15px 0; }
+#addClassFormContainer input[type="time"] { padding: 6px; }
+#classFormMessage.error { color: red; }
+#classFormMessage.success { color: green; }

@@ -8,80 +8,91 @@
 ////////////////////////////////////////////////////////////////
 
 const DataModel = (function () {
-    //WE CAN STORE DATA HERE SO THAT WE DON'T HAVE TO FETCH IT
-    //EVERY TIME WE NEED IT.  THIS IS CALLED "CACHING".
-    //WE CAN ALSO STORE THINGS HERE TO MANAGE STATE, LIKE
-    //WHEN THE USER SELECTS SOMETHING IN THE VIEW AND WE
-    //NEED TO KEEP TRACK OF IT SO WE CAN USE THAT INFOMRATION
-    //LATER.  RIGHT NOW, WE'RE JUST STORING THE JWT TOKEN
-    //AND THE LIST OF USERS.
-    let token = null;  // Holds the JWT token
-    let users = [];    // Holds the list of user emails
+    let token = null;                // Holds the JWT token
+    let users = [];                  // Cached list of user emails
+    let classes = [];                // Cached classes
 
-    //WE CAN CREATE FUNCTIONS HERE TO FETCH DATA FROM THE SERVER
-    //AND RETURN IT TO THE CONTROLLER.  THE CONTROLLER CAN THEN
-    //USE THAT DATA TO UPDATE THE VIEW.  THE CONTROLLER CAN ALSO
-    //SEND DATA TO THE SERVER TO BE STORED IN THE DATABASE BY
-    //CALLING FUNCTIONS THAT WE DEFINE HERE.
+    // Notification prefs cache
+    let notifEnabled = true;
+    let notifPausedUntil = null;
+    let notifServerTimeISO = null;
 
-    // ---------------- NOTIFICATION PREFS (local cache) ----------------
-    let notifEnabled = true;          // current preference: enabled/disabled
-    let notifPausedUntil = null;      // Date or null (when pause lifts)
-    let notifServerTimeISO = null;    // last server time (ISO string)
-
+    // helper to attach Authorization header
     function authHeaders() {
-        // NOTE: Your server expects the raw token in Authorization (not "Bearer ...")
-        return {
-            'Authorization': token,
-            'Content-Type': 'application/json',
-        };
-    }
-
+    if (!token) return { 'Content-Type': 'application/json' };
     return {
-        //utility function to store the token so that we
-        //can use it later to make authenticated requests
+        'Content-Type': 'application/json',
+        // send raw token because your server expects the raw value in req.headers['authorization']
+        'Authorization': token
+    };
+}
+
+    // Public API
+    return {
+        // store the JWT token
         setToken: function (newToken) {
             token = newToken;
         },
 
-        //function to fetch the list of users from the server
+        // ---------- Users ----------
         getUsers: async function () {
-            // Check if the token is set
-            if (!token) {
-                console.error("Token is not set.");
-                return [];
-            }
-
+            if (!token) { console.error("Token is not set."); return []; }
             try {
-                // send the token with Bearer prefix
-                const response = await fetch('/api/users', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) {
-                    console.error("Error fetching users:", await response.json());
+                const res = await fetch('/api/users', { method: 'GET', headers: authHeaders() });
+                if (!res.ok) {
+                    console.error("Error fetching users:", await res.json().catch(()=>({})));
                     return [];
                 }
-
-                const data = await response.json();
-                //store the emails in the users variable so we can
-                //use them again later without having to fetch them
-                users = data.emails;
-                //return the emails to the controller
-                //so that it can update the view
+                const data = await res.json();
+                users = data.emails || [];
                 return users;
-            } catch (error) {
-                console.error("Error in API call:", error);
+            } catch (err) {
+                console.error("getUsers error:", err);
                 return [];
             }
         },
 
-        // ---------------- NOTIFICATION PREFS API ----------------
-        // Load preferences from server and cache locally
+        // ---------- Classes ----------
+        getClasses: async function () {
+            if (!token) { console.error("Token is not set."); return []; }
+            try {
+                const res = await fetch('/api/classes', { method: 'GET', headers: authHeaders() });
+                if (!res.ok) {
+                    console.error("Error fetching classes:", await res.json().catch(()=>({})));
+                    return [];
+                }
+                const data = await res.json();
+                classes = data.classes || [];
+                return classes;
+            } catch (err) {
+                console.error("getClasses error:", err);
+                return [];
+            }
+        },
+
+        createClass: async function (payload) {
+            // payload: { course_name, subject, days, start_time, end_time }
+            if (!token) throw new Error('Token not set');
+            try {
+                const res = await fetch('/api/classes', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    const msg = data && data.message ? data.message : 'Error creating class';
+                    throw new Error(msg);
+                }
+                if (data.class) classes.unshift(data.class);
+                return data.class;
+            } catch (err) {
+                console.error('createClass error:', err);
+                throw err;
+            }
+        },
+
+        // ---------- Notification prefs ----------
         getNotificationPrefs: async function () {
             if (!token) {
                 console.error("Token is not set.");
@@ -90,24 +101,23 @@ const DataModel = (function () {
             try {
                 const resp = await fetch('/api/notifications/prefs', {
                     method: 'GET',
-                    headers: { 'Authorization': token }
+                    headers: authHeaders()
                 });
                 if (!resp.ok) {
                     console.error("Error fetching notification prefs:", await resp.json().catch(() => ({})));
                     return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
                 }
-                const data = await resp.json();
-                notifEnabled = !!data.enabled;
-                notifPausedUntil = data.pausedUntil ? new Date(data.pausedUntil) : null;
-                notifServerTimeISO = data.serverTime || null;
+                const d = await resp.json();
+                notifEnabled = !!d.enabled;
+                notifPausedUntil = d.pausedUntil ? new Date(d.pausedUntil) : null;
+                notifServerTimeISO = d.serverTime || null;
                 return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
             } catch (err) {
-                console.error("Error in notification prefs GET:", err);
+                console.error("getNotificationPrefs error:", err);
                 return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
             }
         },
 
-        // Update preferences on server and update local cache
         setNotificationPrefs: async function ({ enabled, pausedUntil }) {
             if (!token) {
                 console.error("Token is not set.");
@@ -124,33 +134,28 @@ const DataModel = (function () {
                     console.error("Error updating notification prefs:", await resp.json().catch(() => ({})));
                     return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
                 }
-                const data = await resp.json();
-                notifEnabled = !!data.enabled;
-                notifPausedUntil = data.pausedUntil ? new Date(data.pausedUntil) : null;
+                const d = await resp.json();
+                notifEnabled = !!d.enabled;
+                notifPausedUntil = d.pausedUntil ? new Date(d.pausedUntil) : null;
                 return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
             } catch (err) {
-                console.error("Error in notification prefs PUT:", err);
+                console.error("setNotificationPrefs error:", err);
                 return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
             }
         },
 
-        // Convenience helper for client-side gating of toasts, etc.
         notificationsAllowedNow: function () {
             if (!notifEnabled) return false;
             if (!notifPausedUntil) return true;
             return new Date(notifPausedUntil) <= new Date();
         },
 
-        // You can expose raw state if needed by controllers
         _notificationState: function () {
-            return {
-                enabled: notifEnabled,
-                pausedUntil: notifPausedUntil,
-                serverTime: notifServerTimeISO
-            };
+            return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
         },
 
-        //ADD MORE FUNCTIONS HERE TO FETCH DATA FROM THE SERVER
-        //AND SEND DATA TO THE SERVER AS NEEDED
+        // Read-only access to caches for controllers
+        _getCachedUsers: function () { return users.slice(); },
+        _getCachedClasses: function () { return classes.slice(); }
     };
 })();

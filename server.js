@@ -274,3 +274,48 @@ app.locals.notificationsAllowed = notificationsAllowed;
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
+
+
+// Get classes for the authenticated user
+app.get('/api/classes', authenticateToken, async (req, res) => {
+  try {
+    const connection = await createConnection();
+    const [rows] = await connection.execute(
+      'SELECT id, course_name, subject, days, TIME_FORMAT(start_time, "%H:%i") AS start_time, TIME_FORMAT(end_time, "%H:%i") AS end_time FROM classes WHERE user_email = ? ORDER BY created_at DESC',
+      [req.user.email]
+    );
+    await connection.end();
+    res.json({ classes: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching classes.' });
+  }
+});
+
+// Create a new class for the authenticated user
+app.post('/api/classes', authenticateToken, async (req, res) => {
+  const { course_name, subject, days, start_time, end_time } = req.body;
+
+  // Basic validation
+  if (!course_name || !subject || !days || !start_time || !end_time) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    const connection = await createConnection();
+    const [result] = await connection.execute(
+      'INSERT INTO classes (user_email, course_name, subject, days, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.user.email, course_name, subject, days, start_time, end_time]
+    );
+    // fetch the inserted row to return to client
+    const [rows] = await connection.execute(
+      'SELECT id, course_name, subject, days, TIME_FORMAT(start_time, "%H:%i") AS start_time, TIME_FORMAT(end_time, "%H:%i") AS end_time FROM classes WHERE id = ?',
+      [result.insertId]
+    );
+    await connection.end();
+    res.status(201).json({ class: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error saving class.' });
+  }
+});

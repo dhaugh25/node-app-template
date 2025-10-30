@@ -84,3 +84,76 @@ async function renderUserList() {
     userListElement.innerHTML = '<div class="error-message">Failed to load users.</div>';
   }
 }
+
+
+// references to the new form elements
+const openAddClassBtn = document.getElementById('openAddClassBtn');
+const addClassFormContainer = document.getElementById('addClassFormContainer');
+const addClassForm = document.getElementById('addClassForm');
+const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
+const classFormMessage = document.getElementById('classFormMessage');
+
+// Show/hide form
+if (openAddClassBtn && addClassFormContainer) {
+  openAddClassBtn.addEventListener('click', () => {
+    addClassFormContainer.style.display = 'block';
+    classFormMessage.textContent = '';
+  });
+}
+if (cancelAddClassBtn && addClassFormContainer) {
+  cancelAddClassBtn.addEventListener('click', () => {
+    addClassForm.reset();
+    addClassFormContainer.style.display = 'none';
+  });
+}
+
+// On submit: validate, call API, update UI immediately
+if (addClassForm) {
+  addClassForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // collect values
+    const course_name = document.getElementById('courseName').value.trim();
+    const subject = document.getElementById('subject').value.trim();
+    const days = document.getElementById('days').value.trim();
+    const start_time = document.getElementById('startTime').value;
+    const end_time = document.getElementById('endTime').value;
+
+    // client-side validation (acceptance criteria: show error if missing)
+    if (!course_name || !subject || !days || !start_time || !end_time) {
+      classFormMessage.textContent = 'Please fill in all required fields.';
+      classFormMessage.classList.add('error');
+      return;
+    }
+
+    // Optional: check start < end
+    if (start_time >= end_time) {
+      classFormMessage.textContent = 'Start time must be before end time.';
+      classFormMessage.classList.add('error');
+      return;
+    }
+
+    try {
+      classFormMessage.textContent = 'Saving...';
+      const newClass = await DataModel.createClass({ course_name, subject, days, start_time, end_time });
+
+      // hide form & reset
+      addClassForm.reset();
+      addClassFormContainer.style.display = 'none';
+      classFormMessage.textContent = '';
+
+      // Immediately add to class list UI (prepend)
+      const userListElement = document.getElementById('userList'); // reuse your class list container or create a new one
+      const item = document.createElement('div');
+      item.className = 'user-item';
+      item.innerHTML = `<strong>${newClass.course_name}</strong> — ${newClass.subject}<br>
+                        ${newClass.days} ${newClass.start_time}–${newClass.end_time}`;
+      // insert at the top
+      userListElement.insertBefore(item, userListElement.firstChild);
+
+    } catch (err) {
+      classFormMessage.textContent = err.message || 'Error saving class';
+      classFormMessage.classList.add('error');
+    }
+  });
+}
