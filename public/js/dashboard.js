@@ -6,154 +6,202 @@
 // NOTE: notification helpers are provided as globals by dashboard.html:
 // window.isNotificationsEnabled, window.enableNotifications, window.notify
 
+import { enableNotifications, notify } from "/js/notifications.js";
+
 document.addEventListener('DOMContentLoaded', () => {
-  //////////////////////////////////////////
-  // ELEMENTS
-  //////////////////////////////////////////
-  const logoutButton = document.getElementById('logoutButton');
-  const refreshButton = document.getElementById('refreshButton');
-  const notifyToggleBtn = document.getElementById('notifToggleBtn'); // toggle lives in HTML
+    // Core UI elements
+    const logoutButton = document.getElementById('logoutButton');
+    const refreshButton = document.getElementById('refreshButton');
+    const notifyBtn = document.getElementById('notifToggleBtn');
+    const openAddClassBtn = document.getElementById('openAddClassBtn');
 
-  //////////////////////////////////////////
-  // EVENT LISTENERS
-  //////////////////////////////////////////
-  // Log out and redirect to login - clear both storages
-  logoutButton?.addEventListener('click', () => {
-    try {
-      localStorage.removeItem('jwtToken');
-      sessionStorage.removeItem('jwtToken');
-      localStorage.setItem('logoutMessage', 'You have been logged out successfully.');
-    } finally {
-      window.location.href = '/';
+    // Modal elements (from new dashboard.html)
+    const addClassModal = document.getElementById('addClassModal');      // whole modal
+    const addModalBackdrop = document.getElementById('addModalBackdrop'); // backdrop element
+    const modalCloseBtn = document.getElementById('modalCloseBtn');      // × close button
+
+    // Form inside modal
+    const addClassForm = document.getElementById('addClassForm');
+    const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
+    const classFormMessage = document.getElementById('classFormMessage');
+
+    // Class list container
+    const classListElement = document.getElementById('classList');
+
+    // Register service worker (harmless duplicate if already registered)
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(console.error);
     }
-  });
 
-  // Refresh list when the button is clicked (with gated notifications)
-  refreshButton?.addEventListener('click', async () => {
-    try {
-      await renderUserList();
-      if (window.isNotificationsEnabled && window.isNotificationsEnabled()) {
-        window.notify && window.notify({ title: 'Data refreshed', body: 'User list updated.' });
-      }
-    } catch (err) {
-      console.error('Failed to refresh users:', err);
-    }
-  });
-
-  // NOTE: Notification toggle is handled in dashboard.html; no handler here
-
-  //////////////////////////////////////////////////////
-  // CODE THAT NEEDS TO RUN IMMEDIATELY AFTER PAGE LOADS
-  //////////////////////////////////////////////////////
-  // (dashboard.html also registers the SW; duplicate is harmless but we'll skip here)
-
-  // Initial check for the token (either storage)
-  const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
-  if (!token) {
-    window.location.href = '/';
-    return;
-  }
-
-  DataModel.setToken(token);
-  renderUserList();
-
-  // Show welcome only if notifications truly enabled
-  if (window.isNotificationsEnabled && window.isNotificationsEnabled()) {
-    window.notify && window.notify({ title: 'Welcome back!', body: "You’re signed in." });
-  }
-});
-
-//////////////////////////////////////////
-// FUNCTIONS TO MANIPULATE THE DOM
-//////////////////////////////////////////
-async function renderUserList() {
-  const userListElement = document.getElementById('userList');
-  if (!userListElement) return;
-  userListElement.innerHTML = '<div class="loading-message">Loading user list...</div>';
-  try {
-    const users = await DataModel.getUsers();
-    userListElement.innerHTML = '';
-    (users || []).forEach(user => {
-      const userItem = document.createElement('div');
-      userItem.classList.add('user-item');
-      userItem.textContent = user;
-      userListElement.appendChild(userItem);
+    // Logout: clear tokens and redirect
+    logoutButton?.addEventListener('click', () => {
+        localStorage.removeItem('jwtToken');
+        sessionStorage.removeItem('jwtToken');
+        localStorage.setItem('logoutMessage', 'You have been logged out successfully.');
+        window.location.href = '/';
     });
-  } catch (e) {
-    console.error('Error loading users:', e);
-    userListElement.innerHTML = '<div class="error-message">Failed to load users.</div>';
-  }
-}
 
+    // Refresh classes
+    refreshButton?.addEventListener('click', async () => {
+        await renderClassList();
+        if (typeof notify === 'function') notify({ title: "Data refreshed", body: "Class list updated." });
+    });
 
-// references to the new form elements
-const openAddClassBtn = document.getElementById('openAddClassBtn');
-const addClassFormContainer = document.getElementById('addClassFormContainer');
-const addClassForm = document.getElementById('addClassForm');
-const cancelAddClassBtn = document.getElementById('cancelAddClassBtn');
-const classFormMessage = document.getElementById('classFormMessage');
-
-// Show/hide form
-if (openAddClassBtn && addClassFormContainer) {
-  openAddClassBtn.addEventListener('click', () => {
-    addClassFormContainer.style.display = 'block';
-    classFormMessage.textContent = '';
-  });
-}
-if (cancelAddClassBtn && addClassFormContainer) {
-  cancelAddClassBtn.addEventListener('click', () => {
-    addClassForm.reset();
-    addClassFormContainer.style.display = 'none';
-  });
-}
-
-// On submit: validate, call API, update UI immediately
-if (addClassForm) {
-  addClassForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // collect values
-    const course_name = document.getElementById('courseName').value.trim();
-    const subject = document.getElementById('subject').value.trim();
-    const days = document.getElementById('days').value.trim();
-    const start_time = document.getElementById('startTime').value;
-    const end_time = document.getElementById('endTime').value;
-
-    // client-side validation (acceptance criteria: show error if missing)
-    if (!course_name || !subject || !days || !start_time || !end_time) {
-      classFormMessage.textContent = 'Please fill in all required fields.';
-      classFormMessage.classList.add('error');
-      return;
+    // Notifications toggle (uses global enableNotifications/notify or imported helpers)
+    if (notifyBtn) {
+        notifyBtn.addEventListener('click', async () => {
+            const ok = await enableNotifications();
+            if (ok) {
+                notify({ title: "Notifications enabled", body: "You’ll get alerts from the app.", tag: "welcome" });
+                notifyBtn.textContent = "Disable Notifications";
+            } else {
+                notifyBtn.textContent = "Enable Notifications";
+            }
+        });
     }
 
-    // Optional: check start < end
-    if (start_time >= end_time) {
-      classFormMessage.textContent = 'Start time must be before end time.';
-      classFormMessage.classList.add('error');
-      return;
+    // Token check and set DataModel
+    const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+    if (!token) return window.location.href = '/';
+    DataModel.setToken(token);
+
+    // Initial load of classes
+    renderClassList();
+
+    // ---------------- Modal open / close helpers ----------------
+    function openAddModal() {
+        if (!addClassModal) return;
+        addClassModal.classList.add('open');
+        addClassModal.setAttribute('aria-hidden', 'false');
+        // focus first input for accessibility
+        const first = addClassForm?.querySelector('input, select, textarea');
+        if (first) first.focus();
+        // add keydown listener for Esc
+        document.addEventListener('keydown', escHandler);
     }
 
-    try {
-      classFormMessage.textContent = 'Saving...';
-      const newClass = await DataModel.createClass({ course_name, subject, days, start_time, end_time });
-
-      // hide form & reset
-      addClassForm.reset();
-      addClassFormContainer.style.display = 'none';
-      classFormMessage.textContent = '';
-
-      // Immediately add to class list UI (prepend)
-      const userListElement = document.getElementById('userList'); // reuse your class list container or create a new one
-      const item = document.createElement('div');
-      item.className = 'user-item';
-      item.innerHTML = `<strong>${newClass.course_name}</strong> — ${newClass.subject}<br>
-                        ${newClass.days} ${newClass.start_time}–${newClass.end_time}`;
-      // insert at the top
-      userListElement.insertBefore(item, userListElement.firstChild);
-
-    } catch (err) {
-      classFormMessage.textContent = err.message || 'Error saving class';
-      classFormMessage.classList.add('error');
+    function closeAddModal() {
+        if (!addClassModal) return;
+        addClassModal.classList.remove('open');
+        addClassModal.setAttribute('aria-hidden', 'true');
+        if (addClassForm) addClassForm.reset();
+        if (classFormMessage) {
+            classFormMessage.textContent = '';
+            classFormMessage.classList.remove('error', 'success');
+        }
+        document.removeEventListener('keydown', escHandler);
     }
-  });
-}
+
+    function escHandler(e) {
+        if (e.key === 'Escape') closeAddModal();
+    }
+
+    // Open modal on button click
+    openAddClassBtn?.addEventListener('click', () => {
+        openAddModal();
+    });
+
+    // Close modal on backdrop click or close button
+    addModalBackdrop?.addEventListener('click', () => closeAddModal());
+    modalCloseBtn?.addEventListener('click', () => closeAddModal());
+    cancelAddClassBtn?.addEventListener('click', () => closeAddModal());
+
+    // ---------------- Form submit handling (create class) ----------------
+    if (addClassForm) {
+        addClassForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const course_name = document.getElementById('courseName').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const days = document.getElementById('days').value.trim();
+            const start_time = document.getElementById('startTime').value;
+            const end_time = document.getElementById('endTime').value;
+
+            // Client validation
+            if (!course_name || !subject || !days || !start_time || !end_time) {
+                classFormMessage.textContent = 'Please fill in all required fields.';
+                classFormMessage.classList.add('error');
+                return;
+            }
+            if (start_time >= end_time) {
+                classFormMessage.textContent = 'Start time must be before end time.';
+                classFormMessage.classList.add('error');
+                return;
+            }
+
+            try {
+                classFormMessage.textContent = 'Saving...';
+                classFormMessage.classList.remove('error');
+
+                const newClass = await DataModel.createClass({
+                    course_name, subject, days, start_time, end_time
+                });
+
+                // On success: close modal and refresh list from DB
+                closeAddModal();
+                await renderClassList();
+
+                // Optional success notification
+                if (typeof notify === 'function') notify({ title: "Class added", body: `${subject}: ${course_name}` });
+
+            } catch (err) {
+                console.error('Error creating class:', err);
+                classFormMessage.textContent = err.message || 'Error saving class';
+                classFormMessage.classList.add('error');
+            }
+        });
+    }
+
+    // ---------------- Render classes ----------------
+    async function renderClassList() {
+        if (!classListElement) return;
+        classListElement.innerHTML = '<div class="loading-message">Loading classes...</div>';
+
+        const classes = await DataModel.getClasses();
+        classListElement.innerHTML = '';
+
+        if (!classes || classes.length === 0) {
+            classListElement.innerHTML = '<div class="empty-message">No classes yet.</div>';
+            return;
+        }
+
+        classes.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'class-item';
+
+            // Convert "HH:MM" 24h to "h:MM AM/PM"
+            const format12 = (timeStr) => {
+                if (!timeStr) return '';
+                const [h, m] = timeStr.split(':').map(Number);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                const hour = h % 12 || 12;
+                return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`;
+            };
+
+            const start12 = format12(c.start_time);
+            const end12 = format12(c.end_time);
+
+            item.innerHTML = `
+              <div class="class-title"><strong>${escapeHtml(c.subject)}: ${escapeHtml(c.course_name)}</strong></div>
+              <div class="class-meta">${escapeHtml(c.days)} | ${start12} – ${end12}</div>
+            `;
+            classListElement.appendChild(item);
+        });
+    }
+
+    // ---------------- Helpers ----------------
+    function escapeHtml(str) {
+        if (!str && str !== 0) return '';
+        return String(str).replace(/[&<>"'`=\/]/g, s => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '/': '&#x2F;',
+            '`': '&#x60;',
+            '=': '&#x3D;'
+        }[s]));
+    }
+});
+// end DOMContentLoaded

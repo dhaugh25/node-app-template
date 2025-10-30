@@ -30,6 +30,7 @@ h1 {
     margin: 0;
 }
 
+/* ===== BUTTONS ===== */
 #logoutButton {
     padding: 10px 20px;
     background-color: #007bff;
@@ -38,37 +39,46 @@ h1 {
     border-radius: 5px;
     cursor: pointer;
 }
-
 #logoutButton:hover {
     background-color: #0056b3;
 }
-
 #refreshButton {
-    background-color: #28a745; /* Same green color from logon button */
+    background-color: #28a745;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
 }
-
 #refreshButton:hover {
-    background-color: #218838; /* Slightly darker green for hover effect */
+    background-color: #218838;
 }
-
-.user-list {
-    margin-top: 20px;
+#openAddClassBtn {
+    background-color: #222;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
 }
-
-.user-item {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
+#openAddClassBtn:hover {
+    background-color: #444;
+}
+#notifToggleBtn {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#notifToggleBtn:hover {
+    background-color: #eaeaea;
 }
 
 /* ===========================================================
-   NOTIFICATION CONTROLS (APPENDED)
+   NOTIFICATION CONTROLS
    =========================================================== */
-
 .notif-controls {
     display: flex;
     flex-wrap: wrap;
@@ -76,19 +86,16 @@ h1 {
     gap: 10px;
     margin-top: 15px;
 }
-
 .notif-controls label {
     font-size: 14px;
     color: #333;
 }
-
 .notif-controls input[type="datetime-local"] {
     padding: 6px 10px;
     font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 5px;
 }
-
 .notif-controls button {
     padding: 8px 16px;
     font-size: 14px;
@@ -98,31 +105,142 @@ h1 {
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
-
 .notif-controls button:hover {
     background-color: #e9e9e9;
     transform: scale(1.03);
 }
-
 .notif-controls button:disabled {
     background-color: #f1f1f1;
     color: #888;
     cursor: not-allowed;
 }
-
 #askBrowserPermBtn {
     background-color: #ffc107;
     border: none;
     color: #212529;
     font-weight: 600;
 }
-
 #askBrowserPermBtn:hover {
     background-color: #e0a800;
     color: white;
 }
 
+/* ===========================================================
+   CLASS LIST / ADD FORM
+   =========================================================== */
 .add-class-area { margin: 15px 0; }
 #addClassFormContainer input[type="time"] { padding: 6px; }
 #classFormMessage.error { color: red; }
 #classFormMessage.success { color: green; }
+
+.class-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+.class-title { font-size: 1.1em; font-weight: 600; }
+.class-meta { color: #666; font-size: 0.95em; margin-top: 3px; }
+.empty-message { color: #666; padding: 12px; }
+.loading-message { color: #666; padding: 12px; }
+
+/* ===========================================================
+   NEW LAYOUT: SEPARATE BOXES FOR HEADER/BUTTONS vs CLASS LIST
+   =========================================================== */
+.controls-container {
+  background: #fff;
+  padding: 18px 22px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);  /* darker shadow */
+  margin-bottom: 18px;
+
+  /* layout */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* move buttons to the right side */
+.controls-container .header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.controls-container .header h1 {
+  margin: 0;
+  font-size: 1.8em;
+}
+.controls-container .header div {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end; /* push buttons to right */
+}
+
+/* class list container */
+.content-container {
+  background: #fff;
+  padding: 18px 22px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);  /* darker shadow */
+}
+
+/* subtle hover shadow lift */
+.controls-container:hover,
+.content-container:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* ===========================================================
+   MODAL STYLES
+   =========================================================== */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal.open { display: flex; }
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(1px);
+}
+.modal-panel {
+  position: relative;
+  z-index: 1001;
+  background: #fff;
+  width: 100%;
+  max-width: 720px;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+.modal-close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.modal-form input[type="text"],
+.modal-form input[type="time"] {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.button-muted {
+  background: #888;
+  color: #fff;
+}
+
+/* ===========================================================
+   RESPONSIVE
+   =========================================================== */
+@media (max-width: 640px) {
+  .modal-panel { margin: 0 12px; width: calc(100% - 24px); }
+  .controls-container, .content-container { padding: 10px; }
+}
