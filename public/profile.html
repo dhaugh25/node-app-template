@@ -2,42 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Profile & Preferences</title>
+  <title>CourseConnect • Profile & Preferences</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/images/sparky.png">
   <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
 <body>
-  <div class="container">
-    <div class="header" style="display:flex; align-items:center; justify-content:space-between;">
-      <h1>Profile & Preferences</h1>
-      <nav style="display:flex; gap:.75rem;">
-        <a href="/dashboard.html">Dashboard</a>
-        <a href="/login.html">Log out</a>
-      </nav>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img src="/images/sparky.png" alt="">
+        <div><div class="name">CourseConnect</div><div class="tag">Profile</div></div>
+      </div>
+      <div class="nav-actions">
+        <a class="btn" href="/dashboard">Dashboard</a>
+        <a class="btn primary" href="/">Log out</a>
+      </div>
     </div>
+  </header>
 
-    <section class="card" style="padding:1rem; border:1px solid #ddd; border-radius:.75rem; max-width:520px;">
-      <h2>Notifications</h2>
-      <p>Control in-app/browser notifications.</p>
+  <main class="page">
+    <section class="grid">
+      <article class="card half">
+        <div class="card-h"><h2>Notifications</h2></div>
+        <p>Control in-app/browser notifications and pause during class or exams.</p>
 
-      <div style="display:flex; flex-direction:column; gap:.75rem;">
-        <label style="display:flex; align-items:center; gap:.5rem;">
+        <label class="row" style="margin-top:8px;">
           <input type="checkbox" id="notifToggle" />
-          Notifications enabled
+          <span>Notifications enabled</span>
         </label>
 
-        <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;">
+        <div class="notif-controls">
           <input type="datetime-local" id="pauseUntilInput" />
-          <button id="applyPauseBtn" type="button">Pause until</button>
-          <button id="clearPauseBtn" type="button">Clear pause</button>
+          <button id="applyPauseBtn" type="button" class="btn">Pause until</button>
+          <button id="clearPauseBtn" type="button" class="btn">Clear pause</button>
+          <button id="askBrowserPermBtn" type="button" class="btn warn">Allow in browser</button>
         </div>
 
-        <button id="askBrowserPermBtn" type="button">Allow browser notifications</button>
+        <p id="nextStatus" class="sub" style="margin-top:6px;"></p>
+      </article>
 
-        <p id="nextStatus" style="margin-top:.25rem; font-size:.9rem; opacity:.8;"></p>
-      </div>
+      <article class="card half">
+        <div class="card-h"><h2>Account</h2></div>
+        <p class="kicker">Basics</p>
+        <p>Linked email and session info (read-only placeholder).</p>
+      </article>
     </section>
-  </div>
+  </main>
 
   <script src="/js/datamodel.js"></script>
   <script src="/js/profile.js"></script>

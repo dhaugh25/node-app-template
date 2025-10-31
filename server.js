@@ -272,5 +272,5 @@ app.locals.notificationsAllowed = notificationsAllowed;
 
 // Start the server
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+  console.log(`CourseConnect is live →  http://localhost:${port}`);
 });
