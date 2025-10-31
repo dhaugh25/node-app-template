@@ -1,103 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CourseConnect • Dashboard</title>
-  <meta name="theme-color" content="#8C1D40">
-  <link rel="icon" href="/images/sparky.png">
-  <link rel="stylesheet" href="/css/dashboard.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-  <!-- Top Bar -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <img src="/images/sparky.png" alt="CourseConnect logo">
-        <div>
-          <div class="name">CourseConnect</div>
-          <div class="tag">Study Hub • ASU</div>
-        </div>
-      </div>
-      <div class="nav-actions">
-        <a class="btn" href="/profile.html" title="Profile & Preferences">Profile</a>
-        <button id="refreshButton" class="btn">Refresh</button>
-        <button id="notifToggleBtn" class="btn warn">Enable Notifications</button>
-        <button id="logoutButton" class="btn primary">Log Out</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="page">
-    <section class="hero">
-      <div>
-        <h1>Welcome back 👋</h1>
-        <div class="sub">Your centralized hub for <b>classes</b>, <b>study groups</b>, <b>tutoring</b>, and <b>notifications</b>.</div>
-      </div>
-    </section>
-
-    <!-- Action Cards row -->
-    <section class="grid">
-      <!-- Linked Classes -->
-      <article class="card third">
-        <div class="card-h">
-          <h2>My Classes</h2>
-          <a class="link" href="#">Manage</a>
-        </div>
-        <p class="kicker">Class-linking system</p>
-        <ul class="list" id="classesList">
-          <li class="row"><span>Link your classes to auto-surface resources.</span><button class="btn">Link classes</button></li>
-        </ul>
-      </article>
-
-      <!-- Study Groups -->
-      <article class="card third">
-        <div class="card-h">
-          <h2>Study Groups</h2>
-          <a class="link" href="#">Browse all</a>
-        </div>
-        <p class="kicker">Community</p>
-        <ul class="list" id="groupsList">
-          <li class="row"><span>Find or create a study group for any class.</span><button class="btn">Create group</button></li>
-        </ul>
-      </article>
-
-      <!-- Tutoring -->
-      <article class="card third">
-        <div class="card-h">
-          <h2>Tutoring</h2>
-          <a class="link" href="#">See schedule</a>
-        </div>
-        <p class="kicker">Recommendations</p>
-        <ul class="list" id="tutorList">
-          <li class="row"><span>Personalized times based on your schedule.</span><button class="btn success">Get recs</button></li>
-        </ul>
-      </article>
-
-      <!-- Notifications Center -->
-      <article class="card half">
-        <div class="card-h">
-          <h2>Notifications Center</h2>
-          <span class="badge" id="notifStatus">Status: Off</span>
-        </div>
-        <p>Enable reminders for group sessions, tutoring, and deadlines. Use <em>Pause until</em> to quiet alerts during class or exams.</p>
-        <div class="notif-controls" style="margin-top:12px">
-          <input type="datetime-local" id="pauseUntilDash">
-          <button id="applyPauseDash" class="btn">Pause until</button>
-          <button id="clearPauseDash" class="btn">Clear pause</button>
-        </div>
-        <p class="sub" id="notifNextMsg" style="margin-top:8px"></p>
-      </article>
-
-      <!-- Users (existing API demo) -->
-      <article class="card half full">
-        <div class="card-h">
-          <h2>Members (demo)</h2>
-          <button id="miniRefresh" class="btn">Reload</button>
+    <div class="container">
+        <div class="header">
+            <h1>Users</h1>
+            <div>
+                <button id="refreshButton">Refresh List</button>
+                <button id="logoutButton">Log Out</button>
+                <!-- New: notifications -->
+                <button id="notifToggleBtn">Enable Notifications</button>
+            </div>
         </div>
         <div class="user-list" id="userList"></div>
-      </article>
-    </section>
+    </div>
 
     <p class="footer-note">© <span id="year"></span> CourseConnect — Six Below</p>
   </main>
@@ -106,151 +27,123 @@
   <script src="/js/datamodel.js"></script>
   <script src="/js/dashboard.js" type="module"></script>
 
-  <!-- Page-local bootstrapping (keeps your existing notif helpers) -->
-  <script type="module">
-    // Set year
-    document.getElementById('year').textContent = new Date().getFullYear();
+    <script type="module">
+      // Register SW
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(console.error);
+      }
 
-    // Register SW
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(console.error);
-    }
+      // ---- Local, gated notifications (no external import)
+      function isNotificationsEnabled() {
+        const disabled = localStorage.getItem('notifDisabled') === 'true';
+        return (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !disabled);
+      }
 
-    // ==== Notification helpers (kept from your previous page) ====
-    function isNotificationsEnabled() {
-      const disabled = localStorage.getItem('notifDisabled') === 'true';
-      return (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !disabled);
-    }
-    async function enableNotifications() {
-      if (typeof Notification === 'undefined') return false;
-      if (Notification.permission === 'granted') { localStorage.setItem('notifDisabled','false'); return true; }
-      const perm = await Notification.requestPermission();
-      if (perm === 'granted') { localStorage.setItem('notifDisabled','false'); return true; }
-      return false;
-    }
-    function notify({ title, body, tag } = {}) {
-      if (!isNotificationsEnabled()) return false;
-      try { new Notification(title || 'CourseConnect', { body: body || '', tag: tag || 'courseconnect' }); return true; }
-      catch(e){ console.error('notify error:', e); return false; }
-    }
-
-    // Protect global Notification if disabled
-    (() => {
-      if (typeof window.Notification === 'function') {
-        const Native = window.Notification;
-        function Guarded(title, opts){
-          const disabled = localStorage.getItem('notifDisabled') === 'true';
-          if (disabled) { console.warn('Notification suppressed'); return; }
-          return new Native(title, opts);
+      async function enableNotifications() {
+        if (typeof Notification === 'undefined') return false;
+        if (Notification.permission === 'granted') {
+          localStorage.setItem('notifDisabled', 'false');
+          return true;
         }
-        Guarded.requestPermission = Native.requestPermission.bind(Native);
-        Object.defineProperty(Guarded,'permission',{get(){return Native.permission;}});
-        window.Notification = Guarded;
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          localStorage.setItem('notifDisabled', 'false');
+          return true;
+        }
+        return false;
       }
-    })();
 
-    // Expose to dashboard.js
-    window.isNotificationsEnabled = isNotificationsEnabled;
-    window.enableNotifications = enableNotifications;
-    window.notify = notify;
-
-    // UI wiring for the center on this page
-    const statusEl = document.getElementById('notifStatus');
-    const nextMsg = document.getElementById('notifNextMsg');
-    const pauseInput = document.getElementById('pauseUntilDash');
-    const applyPause = document.getElementById('applyPauseDash');
-    const clearPause = document.getElementById('clearPauseDash');
-
-    function paintStatus({enabled, pausedUntil}){
-      const on = !!enabled && window.isNotificationsEnabled();
-      statusEl.textContent = 'Status: ' + (on ? 'On' : 'Off');
-      if (!on) {
-        nextMsg.textContent = 'Notifications are disabled.';
-        return;
+      function notify({ title, body, tag } = {}) {
+        if (!isNotificationsEnabled()) return false;
+        try {
+          new Notification(title || 'CourseConnect', {
+            body: body || '',
+            tag: tag || 'courseconnect'
+          });
+          return true;
+        } catch (e) {
+          console.error('notify error:', e);
+          return false;
+        }
       }
-      if (pausedUntil) {
-        const dt = new Date(pausedUntil);
-        nextMsg.textContent = 'Paused until ' + dt.toLocaleString();
-      } else {
-        nextMsg.textContent = 'Notifications enabled with no pause.';
+
+      // === HARD KILL SWITCH: intercept any direct new Notification(...) calls ===
+      (() => {
+        if (typeof window.Notification === 'function') {
+          const NativeNotification = window.Notification;
+          function GuardedNotification(title, options) {
+            const disabled = localStorage.getItem('notifDisabled') === 'true';
+            // If disabled, suppress and log instead of showing a popup
+            if (disabled) {
+              console.warn('Notification suppressed (disabled):', title, options);
+              return; // do nothing
+            }
+            return new NativeNotification(title, options);
+          }
+          // Preserve API surface
+          GuardedNotification.requestPermission = NativeNotification.requestPermission.bind(NativeNotification);
+          Object.defineProperty(GuardedNotification, 'permission', {
+            get() { return NativeNotification.permission; }
+          });
+          // Override global
+          window.Notification = GuardedNotification;
+        }
+      })();
+
+      // Expose gated helpers globally so all scripts use them
+      window.isNotificationsEnabled = isNotificationsEnabled;
+      window.enableNotifications = enableNotifications;
+      window.notify = notify;
+
+      const notifToggleBtn = document.getElementById("notifToggleBtn");
+
+      // Derive initial state from permission + persisted flag
+      function computeEnabled() {
+        const disabled = localStorage.getItem("notifDisabled") === "true";
+        return (typeof Notification !== "undefined" &&
+                Notification.permission === "granted" &&
+                !disabled);
       }
-    }
 
-    async function syncFromServer(){
-      try{
-        const prefs = await DataModel.getNotificationPrefs();
-        // Prefill datetime-local in local timezone
-        pauseInput.value = prefs.pausedUntil
-          ? new Date(prefs.pausedUntil.getTime() - (new Date().getTimezoneOffset()*60000)).toISOString().slice(0,16)
-          : '';
-        paintStatus(prefs);
-      }catch(e){ console.error('load prefs failed', e); }
-    }
+      let notificationsEnabled = computeEnabled();
+      if (notifToggleBtn) {
+        notifToggleBtn.textContent = notificationsEnabled ? "Disable Notifications" : "Enable Notifications";
+      }
 
-    applyPause.addEventListener('click', async ()=>{
-      try{
-        const enabled = window.isNotificationsEnabled();
-        const pausedUntil = pauseInput.value || null;
-        const saved = await DataModel.setNotificationPrefs({ enabled, pausedUntil });
-        paintStatus(saved);
-      }catch(e){ console.error('apply pause failed', e); }
-    });
+      // Keep SW in sync (so push notifications also respect the toggle)
+      async function syncSWState() {
+        const reg = await navigator.serviceWorker?.ready.catch(() => null);
+        reg?.active?.postMessage({ type: "NOTIF_STATE", disabled: !notificationsEnabled });
+      }
+      syncSWState();
 
-    clearPause.addEventListener('click', async ()=>{
-      try{
-        const enabled = window.isNotificationsEnabled();
-        const saved = await DataModel.setNotificationPrefs({ enabled, pausedUntil:null });
-        pauseInput.value = '';
-        paintStatus(saved);
-      }catch(e){ console.error('clear pause failed', e); }
-    });
-
-    // Initial
-    syncFromServer();
-
-    // Make header toggle reflect current permission
-    const toggleBtn = document.getElementById('notifToggleBtn');
-    function computeEnabled(){
-      const disabled = localStorage.getItem('notifDisabled') === 'true';
-      return (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !disabled);
-    }
-    let enabledState = computeEnabled();
-    toggleBtn.textContent = enabledState ? 'Disable Notifications' : 'Enable Notifications';
-
-    async function syncSWState(){
-      const reg = await navigator.serviceWorker?.ready.catch(()=>null);
-      reg?.active?.postMessage({ type:'NOTIF_STATE', disabled: !enabledState });
-    }
-    syncSWState();
-
-    toggleBtn.addEventListener('click', async ()=>{
-      if (!enabledState){
-        if (await enableNotifications()){
-          enabledState = true;
-          localStorage.setItem('notifDisabled','false');
-          toggleBtn.textContent = 'Disable Notifications';
-          notify({title:'Notifications enabled', body:'You’ll get alerts from CourseConnect.'});
-          await DataModel.setNotificationPrefs({ enabled:true, pausedUntil: pauseInput.value || null });
-          paintStatus(await DataModel.getNotificationPrefs());
+      // Toggle handler
+      notifToggleBtn?.addEventListener("click", async () => {
+        if (!notificationsEnabled) {
+          const ok = await enableNotifications();
+          if (ok) {
+            notificationsEnabled = true;
+            localStorage.setItem("notifDisabled", "false");
+            notifToggleBtn.textContent = "Disable Notifications";
+            window.notify({ title: "Notifications enabled", body: "You’ll get alerts from the app." });
+            syncSWState();
+          }
+        } else {
+          notificationsEnabled = false;
+          localStorage.setItem("notifDisabled", "true");
+          notifToggleBtn.textContent = "Enable Notifications";
+          // It's okay to show a one-time confirmation here
+          if (Notification.permission === "granted") {
+            window.notify({ title: "Notifications disabled", body: "You will not receive alerts until re-enabled." });
+          }
           syncSWState();
         }
-      } else {
-        enabledState = false;
-        localStorage.setItem('notifDisabled','true');
-        toggleBtn.textContent = 'Enable Notifications';
-        // Light feedback
-        if (Notification.permission === 'granted') notify({title:'Notifications disabled', body:'Re-enable anytime from the header.'});
-        await DataModel.setNotificationPrefs({ enabled:false, pausedUntil: pauseInput.value || null });
-        paintStatus(await DataModel.getNotificationPrefs());
-        syncSWState();
+      });
+
+      // Optional greet ONLY if enabled
+      if (isNotificationsEnabled()) {
+        window.notify({ title: "Welcome back!", body: "You’re signed in." });
       }
-    });
-
-    // Friendly greet if on
-    if (isNotificationsEnabled()) notify({title:'Welcome back!', body:'You’re signed in.'});
-
-    // Mirror "Reload" to your Refresh button
-    document.getElementById('miniRefresh')?.addEventListener('click', ()=>document.getElementById('refreshButton')?.click());
-  </script>
+    </script>
 </body>
 </html>
