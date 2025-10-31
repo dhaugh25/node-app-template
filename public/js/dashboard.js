@@ -1,85 +1,155 @@
-////////////////////////////////////////////////
-// DASHBOARD.JS — Controller
-////////////////////////////////////////////////
+// CONTROLLER: wire events, call DataModel, update DOM.
+document.addEventListener('DOMContentLoaded', init);
 
-// NOTE: notification helpers are provided as globals by dashboard.html:
-// window.isNotificationsEnabled, window.enableNotifications, window.notify
+async function init(){
+  // Elements
+  const logoutButton = $('#logoutButton');
+  const refreshButton = $('#refreshButton');
+  const askPermBtn   = $('#askBrowserPermBtn');
+  const testNotifBtn = $('#testNotifBtn');
+  const notifToggleBtn = $('#notifToggleBtn');
+  const notifSwitch  = $('#notifSwitch');
+  const notifState   = $('#notifState');
+  const classForm    = $('#classForm');
+  const classesBody  = $('#classesBody');
 
-document.addEventListener('DOMContentLoaded', () => {
-  //////////////////////////////////////////
-  // ELEMENTS
-  //////////////////////////////////////////
-  const logoutButton = document.getElementById('logoutButton');
-  const refreshButton = document.getElementById('refreshButton');
-  const notifyToggleBtn = document.getElementById('notifToggleBtn'); // toggle lives in HTML
-
-  //////////////////////////////////////////
-  // EVENT LISTENERS
-  //////////////////////////////////////////
-  // Log out and redirect to login - clear both storages
-  logoutButton?.addEventListener('click', () => {
-    try {
-      localStorage.removeItem('jwtToken');
-      sessionStorage.removeItem('jwtToken');
-      localStorage.setItem('logoutMessage', 'You have been logged out successfully.');
-    } finally {
-      window.location.href = '/';
-    }
-  });
-
-  // Refresh list when the button is clicked (with gated notifications)
-  refreshButton?.addEventListener('click', async () => {
-    try {
-      await renderUserList();
-      if (window.isNotificationsEnabled && window.isNotificationsEnabled()) {
-        window.notify && window.notify({ title: 'Data refreshed', body: 'User list updated.' });
-      }
-    } catch (err) {
-      console.error('Failed to refresh users:', err);
-    }
-  });
-
-  // NOTE: Notification toggle is handled in dashboard.html; no handler here
-
-  //////////////////////////////////////////////////////
-  // CODE THAT NEEDS TO RUN IMMEDIATELY AFTER PAGE LOADS
-  //////////////////////////////////////////////////////
-  // (dashboard.html also registers the SW; duplicate is harmless but we'll skip here)
-
-  // Initial check for the token (either storage)
+  // Auth check
   const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
-  if (!token) {
-    window.location.href = '/';
-    return;
-  }
-
+  if (!token){ location.href = '/'; return; }
   DataModel.setToken(token);
-  renderUserList();
 
-  // Show welcome only if notifications truly enabled
-  if (window.isNotificationsEnabled && window.isNotificationsEnabled()) {
-    window.notify && window.notify({ title: 'Welcome back!', body: "You’re signed in." });
-  }
-});
+  // Initial data
+  renderUsers(await DataModel.getUsers());
+  renderClasses(await DataModel.getClasses());
 
-//////////////////////////////////////////
-// FUNCTIONS TO MANIPULATE THE DOM
-//////////////////////////////////////////
-async function renderUserList() {
-  const userListElement = document.getElementById('userList');
-  if (!userListElement) return;
-  userListElement.innerHTML = '<div class="loading-message">Loading user list...</div>';
-  try {
-    const users = await DataModel.getUsers();
-    userListElement.innerHTML = '';
-    (users || []).forEach(user => {
-      const userItem = document.createElement('div');
-      userItem.classList.add('user-item');
-      userItem.textContent = user;
-      userListElement.appendChild(userItem);
-    });
-  } catch (e) {
-    console.error('Error loading users:', e);
-    userListElement.innerHTML = '<div class="error-message">Failed to load users.</div>';
+  // Notifications UI
+  const enabledNow = window.isNotificationsEnabled && window.isNotificationsEnabled();
+  updateNotifUI(enabledNow);
+
+  // EVENTS
+  logoutButton?.addEventListener('click', onLogout);
+  refreshButton?.addEventListener('click', async ()=>{
+    await Promise.all([refreshUsers(), refreshClasses()]);
+    toast('Refreshed');
+    if (window.isNotificationsEnabled?.()) window.notify?.({title:'Data refreshed', body:'Lists updated.'});
+  });
+
+  askPermBtn?.addEventListener('click', async ()=>{
+    const ok = await window.enableNotifications?.();
+    updateNotifUI(ok && !isDisabled());
+    toast(ok ? 'Browser permission granted' : 'Permission not granted');
+  });
+
+  testNotifBtn?.addEventListener('click', ()=>{
+    window.notify?.({ title:'CourseConnect', body:'This is a test notification.' });
+  });
+
+  notifToggleBtn?.addEventListener('click', ()=>{
+    const disabled = isDisabled();
+    localStorage.setItem('notifDisabled', disabled ? 'false' : 'true');
+    updateNotifUI(!disabled && window.isNotificationsEnabled?.());
+    toast(disabled ? 'Notifications enabled' : 'Notifications disabled');
+  });
+
+  // switch (visual)
+  notifSwitch?.addEventListener('click', ()=>{
+    const on = notifSwitch.dataset.on === 'true';
+    localStorage.setItem('notifDisabled', on ? 'true' : 'false');
+    updateNotifUI(!on && window.isNotificationsEnabled?.());
+  });
+  notifSwitch?.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); notifSwitch.click(); }
+  });
+
+  classForm?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const payload = {
+      course_name: v('#course_name'),
+      subject: v('#subject'),
+      days: v('#days'),
+      start_time: v('#start_time'),
+      end_time: v('#end_time'),
+    };
+    try{
+      const row = await DataModel.addClass(payload);
+      prependClassRow(row);
+      classForm.reset();
+      toast('Class added');
+      if (window.isNotificationsEnabled?.() && notifSwitch?.dataset.on === 'true'){
+        window.notify?.({ title:'Class added', body:`${row.course_name} • ${row.days} ${row.start_time}-${row.end_time}` });
+      }
+    }catch(err){
+      console.error(err); toast('Could not save', true);
+    }
+  });
+
+  // helpers
+  function updateNotifUI(enabled){
+    const disabled = isDisabled();
+    notifToggleBtn.textContent = (!disabled && enabled) ? 'Disable Notifications' : 'Enable Notifications';
+    notifSwitch.dataset.on = (!disabled && enabled) ? 'true' : 'false';
+    notifState.textContent = (!disabled && enabled) ? 'Notifications are ON.' : 'Notifications are OFF.';
   }
+}
+
+function isDisabled(){ return localStorage.getItem('notifDisabled') === 'true'; }
+
+async function refreshUsers(){ renderUsers(await DataModel.getUsers()); }
+async function refreshClasses(){ renderClasses(await DataModel.getClasses()); }
+
+// ----- Renderers -----
+function renderUsers(list){
+  const el = $('#userList'); if (!el) return;
+  el.innerHTML = '';
+  (list || []).forEach(email=>{
+    const d = document.createElement('div');
+    d.className = 'user-item';
+    d.textContent = email;
+    el.appendChild(d);
+  });
+  if (!list?.length){ el.innerHTML = '<div class="sub">No users found.</div>'; }
+}
+
+function renderClasses(rows){
+  const body = $('#classesBody'); if (!body) return;
+  body.innerHTML = '';
+  (rows || []).forEach(prependClassRow);
+  if (!rows?.length){
+    const tr = document.createElement('tr');
+    const td = document.createElement('td'); td.colSpan = 5; td.className='sub'; td.textContent='No classes yet.';
+    tr.appendChild(td); body.appendChild(tr);
+  }
+}
+function prependClassRow(row){
+  const body = $('#classesBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${esc(row.course_name)}</td>
+    <td>${esc(row.subject)}</td>
+    <td>${esc(row.days)}</td>
+    <td>${esc(row.start_time)}</td>
+    <td>${esc(row.end_time)}</td>`;
+  body?.prepend(tr);
+}
+
+// ----- Utility -----
+function $(sel){ return document.querySelector(sel); }
+function v(sel){ return (document.querySelector(sel)?.value || '').trim(); }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+// in-app toast
+let toastTimer = null;
+function toast(msg, isError=false){
+  const t = $('#toast'); if (!t) return;
+  t.textContent = msg; t.classList.add('show');
+  t.style.borderColor = isError ? 'rgba(239,68,68,.6)' : 'rgba(255,255,255,.1)';
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=> t.classList.remove('show'), 1800);
+}
+
+function onLogout(){
+  try{
+    localStorage.removeItem('jwtToken');
+    sessionStorage.removeItem('jwtToken');
+    localStorage.setItem('logoutMessage','You have been logged out successfully.');
+  } finally { location.href = '/'; }
 }

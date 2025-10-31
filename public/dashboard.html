@@ -1,149 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CourseConnect — Dashboard</title>
+  <link rel="icon" href="/images/sparky.png" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Users</h1>
-            <div>
-                <button id="refreshButton">Refresh List</button>
-                <button id="logoutButton">Log Out</button>
-                <!-- New: notifications -->
-                <button id="notifToggleBtn">Enable Notifications</button>
-            </div>
-        </div>
-        <div class="user-list" id="userList"></div>
+  <!-- Top bar -->
+  <header class="sitebar">
+    <div class="brand">
+      <img src="/images/sparky.png" alt="CourseConnect" />
+      <span>CourseConnect</span>
+      <span class="kicker">Dashboard</span>
     </div>
+    <nav>
+      <button id="refreshButton" class="btn">Refresh</button>
+      <button id="notifToggleBtn" class="btn ghost">Enable Notifications</button>
+      <button id="logoutButton" class="btn warn">Log Out</button>
+    </nav>
+  </header>
 
-    <p class="footer-note">© <span id="year"></span> CourseConnect — Six Below</p>
+  <main class="container">
+    <!-- Left: Study System / Classes -->
+    <section class="card">
+      <h2>Study Planner</h2>
+      <p class="sub">Add your classes and keep them in view.</p>
+
+      <form id="classForm">
+        <div class="form-grid">
+          <input class="input" id="course_name" placeholder="Course name (e.g., CIS 440)" required />
+          <input class="input" id="subject" placeholder="Subject (e.g., Info Systems)" required />
+          <select id="days" class="input" required>
+            <option value="">Days</option>
+            <option>MWF</option><option>TR</option><option>MTWRF</option>
+          </select>
+          <div class="row" style="gap:10px">
+            <input class="input" id="start_time" type="time" required />
+            <input class="input" id="end_time" type="time" required />
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn ok" type="submit">Add Class</button>
+          <span id="classMsg" class="sub"></span>
+          <div class="right row">
+            <span class="sub">Quick notify on add</span>
+            <div id="notifSwitch" class="switch" role="switch" aria-label="Notifications toggle" tabindex="0" data-on="false"></div>
+          </div>
+        </div>
+      </form>
+
+      <table class="table" id="classesTable">
+        <thead>
+          <tr>
+            <th>Course</th><th>Subject</th><th>Days</th><th>Start</th><th>End</th>
+          </tr>
+        </thead>
+        <tbody id="classesBody"></tbody>
+      </table>
+    </section>
+
+    <!-- Right: People + Notification controls -->
+    <aside class="card">
+      <h2>People</h2>
+      <p class="sub">Authorized users in the system.</p>
+      <div id="userList" class="user-list"></div>
+
+      <hr style="border-color:rgba(255,255,255,.08); margin:14px 0" />
+
+      <h2>Notifications</h2>
+      <p class="sub">Toggle app/browser notifications.</p>
+      <div class="notif-controls">
+        <button id="askBrowserPermBtn" class="btn brand">Allow in browser</button>
+        <button id="testNotifBtn" class="btn">Test</button>
+      </div>
+      <p id="notifState" class="sub" style="margin-top:8px"></p>
+    </aside>
   </main>
 
-  <!-- Scripts -->
+  <div id="toast" class="toast">Saved</div>
+
   <script src="/js/datamodel.js"></script>
   <script src="/js/dashboard.js" type="module"></script>
 
-    <script type="module">
-      // Register SW
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js").catch(console.error);
+  <!-- Service worker + gated Notification helpers -->
+  <script type="module">
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(console.error);
+    }
+
+    function isNotificationsEnabled() {
+      const disabled = localStorage.getItem('notifDisabled') === 'true';
+      return (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !disabled);
+    }
+    async function enableNotifications() {
+      if (typeof Notification === 'undefined') return false;
+      if (Notification.permission === 'granted') {
+        localStorage.setItem('notifDisabled','false'); return true;
       }
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted'){ localStorage.setItem('notifDisabled','false'); return true;}
+      return false;
+    }
+    function notify({title, body, tag}={}) {
+      if (!isNotificationsEnabled()) return false;
+      try{ new Notification(title||'CourseConnect',{body: body||'', tag: tag||'courseconnect'}); return true; }
+      catch(e){ console.error(e); return false; }
+    }
 
-      // ---- Local, gated notifications (no external import)
-      function isNotificationsEnabled() {
-        const disabled = localStorage.getItem('notifDisabled') === 'true';
-        return (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !disabled);
-      }
-
-      async function enableNotifications() {
-        if (typeof Notification === 'undefined') return false;
-        if (Notification.permission === 'granted') {
-          localStorage.setItem('notifDisabled', 'false');
-          return true;
-        }
-        const perm = await Notification.requestPermission();
-        if (perm === 'granted') {
-          localStorage.setItem('notifDisabled', 'false');
-          return true;
-        }
-        return false;
-      }
-
-      function notify({ title, body, tag } = {}) {
-        if (!isNotificationsEnabled()) return false;
-        try {
-          new Notification(title || 'CourseConnect', {
-            body: body || '',
-            tag: tag || 'courseconnect'
-          });
-          return true;
-        } catch (e) {
-          console.error('notify error:', e);
-          return false;
-        }
-      }
-
-      // === HARD KILL SWITCH: intercept any direct new Notification(...) calls ===
-      (() => {
-        if (typeof window.Notification === 'function') {
-          const NativeNotification = window.Notification;
-          function GuardedNotification(title, options) {
-            const disabled = localStorage.getItem('notifDisabled') === 'true';
-            // If disabled, suppress and log instead of showing a popup
-            if (disabled) {
-              console.warn('Notification suppressed (disabled):', title, options);
-              return; // do nothing
-            }
-            return new NativeNotification(title, options);
-          }
-          // Preserve API surface
-          GuardedNotification.requestPermission = NativeNotification.requestPermission.bind(NativeNotification);
-          Object.defineProperty(GuardedNotification, 'permission', {
-            get() { return NativeNotification.permission; }
-          });
-          // Override global
-          window.Notification = GuardedNotification;
-        }
-      })();
-
-      // Expose gated helpers globally so all scripts use them
-      window.isNotificationsEnabled = isNotificationsEnabled;
-      window.enableNotifications = enableNotifications;
-      window.notify = notify;
-
-      const notifToggleBtn = document.getElementById("notifToggleBtn");
-
-      // Derive initial state from permission + persisted flag
-      function computeEnabled() {
-        const disabled = localStorage.getItem("notifDisabled") === "true";
-        return (typeof Notification !== "undefined" &&
-                Notification.permission === "granted" &&
-                !disabled);
-      }
-
-      let notificationsEnabled = computeEnabled();
-      if (notifToggleBtn) {
-        notifToggleBtn.textContent = notificationsEnabled ? "Disable Notifications" : "Enable Notifications";
-      }
-
-      // Keep SW in sync (so push notifications also respect the toggle)
-      async function syncSWState() {
-        const reg = await navigator.serviceWorker?.ready.catch(() => null);
-        reg?.active?.postMessage({ type: "NOTIF_STATE", disabled: !notificationsEnabled });
-      }
-      syncSWState();
-
-      // Toggle handler
-      notifToggleBtn?.addEventListener("click", async () => {
-        if (!notificationsEnabled) {
-          const ok = await enableNotifications();
-          if (ok) {
-            notificationsEnabled = true;
-            localStorage.setItem("notifDisabled", "false");
-            notifToggleBtn.textContent = "Disable Notifications";
-            window.notify({ title: "Notifications enabled", body: "You’ll get alerts from the app." });
-            syncSWState();
-          }
-        } else {
-          notificationsEnabled = false;
-          localStorage.setItem("notifDisabled", "true");
-          notifToggleBtn.textContent = "Enable Notifications";
-          // It's okay to show a one-time confirmation here
-          if (Notification.permission === "granted") {
-            window.notify({ title: "Notifications disabled", body: "You will not receive alerts until re-enabled." });
-          }
-          syncSWState();
-        }
-      });
-
-      // Optional greet ONLY if enabled
-      if (isNotificationsEnabled()) {
-        window.notify({ title: "Welcome back!", body: "You’re signed in." });
-      }
-    </script>
+    window.isNotificationsEnabled = isNotificationsEnabled;
+    window.enableNotifications = enableNotifications;
+    window.notify = notify;
+  </script>
 </body>
 </html>

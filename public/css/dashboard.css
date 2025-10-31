@@ -1,243 +1,127 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
+:root{
+  --ink:#0f172a;           /* slate-900 */
+  --muted:#475569;         /* slate-600 */
+  --bg:#0b1020;            /* deep backdrop */
+  --card:#111827;          /* gray-900 */
+  --soft:#1f2937;          /* gray-800 */
+  --brand:#a21caf;         /* fuchsia-700 (ASU-ish pop) */
+  --brand-2:#f59e0b;       /* amber-500 */
+  --ok:#22c55e;            /* green-500 */
+  --warn:#fbbf24;          /* amber-400 */
+  --err:#ef4444;           /* red-500 */
+  --ring: rgba(162, 28, 175, .35);
 }
 
-.container {
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 60%;
-    margin: 0 auto;
-    margin-top: 20px;
+*{box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  margin:0;
+  font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+  color:#e5e7eb;
+  background:
+    radial-gradient(1200px 600px at 90% -20%, rgba(162,28,175,.25), transparent 60%),
+    radial-gradient(1000px 500px at -10% 10%, rgba(245,158,11,.15), transparent 55%),
+    var(--bg);
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* ---------- App Shell ---------- */
+.sitebar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:.75rem;
+  padding:14px 20px;
+  background: color-mix(in oklab, #0b1020 92%, #000);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  backdrop-filter: blur(8px);
+}
+.brand{
+  display:flex; align-items:center; gap:.6rem; font-weight:800; letter-spacing:.2px;
+}
+.brand img{width:26px; height:26px; border-radius:6px}
+.brand span{font-size:15px}
+.sitebar nav{margin-left:auto; display:flex; gap:.5rem}
+.btn{
+  padding:8px 12px; border:1px solid rgba(255,255,255,.08); border-radius:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  color:#e5e7eb; cursor:pointer; transition:.18s transform, .18s box-shadow, .18s background;
+}
+.btn:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.btn.brand{border-color:transparent;background:linear-gradient(135deg,var(--brand),#7c3aed)}
+.btn.ghost{background:transparent}
+.btn.warn{background:linear-gradient(135deg,var(--warn),#f59e0b); color:#171717}
+.btn.ok{background:linear-gradient(135deg,var(--ok),#16a34a); color:#08210f}
+
+/* ---------- Layout ---------- */
+.container{
+  max-width:1100px; margin:28px auto; padding:0 18px;
+  display:grid; grid-template-columns: 1.25fr .85fr; gap:18px;
+}
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px; padding:18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.card h2{margin:0 0 10px 0; font-size:18px}
+.sub{color:#cbd5e1; font-size:13px; margin:0 0 14px 0}
+
+/* ---------- Users ---------- */
+.user-list{display:flex; flex-direction:column; gap:8px; margin-top:8px}
+.user-item{
+  padding:10px 12px; border-radius:10px; background:var(--soft);
+  border:1px solid rgba(255,255,255,.06);
+  font-size:14px; color:#e2e8f0;
 }
 
-.header div {
-    display: flex;
-    gap: 10px;
+/* ---------- Classes (Study System) ---------- */
+.form-grid{
+  display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin:8px 0 12px;
 }
+.form-grid.full{grid-template-columns: 1fr}
+.input, select{
+  width:100%; padding:10px 12px; border-radius:10px;
+  background:#0f172a; color:#e5e7eb; border:1px solid rgba(255,255,255,.08);
+  outline:none; box-shadow:0 0 0 0 var(--ring);
+}
+.input:focus, select:focus{box-shadow:0 0 0 4px var(--ring)}
+.table{
+  width:100%; border-collapse:separate; border-spacing:0 8px; margin-top:6px;
+}
+.table th{font-size:12px; color:#9ca3af; font-weight:600; text-align:left; padding:4px 8px}
+.table td{
+  background:var(--soft); border:1px solid rgba(255,255,255,.06);
+  padding:10px 12px; font-size:14px; color:#e5e7eb;
+}
+.table tr td:first-child{border-radius:10px 0 0 10px}
+.table tr td:last-child{border-radius:0 10px 10px 0}
 
-h1 {
-    margin: 0;
+/* ---------- Notifications ---------- */
+.notif-controls{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
 }
+.switch{
+  --h:22px;
+  inline-size: 44px; block-size:var(--h);
+  background:#374151; border-radius:999px; position:relative; cursor:pointer; border:1px solid rgba(255,255,255,.08);
+}
+.switch::after{
+  content:""; position:absolute; inset:2px auto 2px 2px; aspect-ratio:1; block-size: calc(var(--h) - 4px);
+  background:white; border-radius:50%; transition: transform .18s ease;
+}
+.switch[data-on="true"]{background:linear-gradient(135deg,var(--brand-2),var(--brand))}
+.switch[data-on="true"]::after{transform: translateX(22px)}
 
-#logoutButton {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+/* ---------- Helpers ---------- */
+.row{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.right{margin-left:auto}
+.loading-message,.error-message{font-size:14px; color:#cbd5e1; opacity:.9}
+.kicker{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#a78bfa}
 
-#logoutButton:hover {
-    background-color: #0056b3;
+/* ---------- Toast (in-app) ---------- */
+.toast{
+  position:fixed; left:50%; transform:translateX(-50%);
+  bottom:18px; background:#111827; color:#e5e7eb;
+  border:1px solid rgba(255,255,255,.1); padding:10px 14px; border-radius:10px;
+  box-shadow:0 12px 30px rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:.25s;
 }
-
-#refreshButton {
-    background-color: #28a745; /* Same green color from logon button */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#refreshButton:hover {
-    background-color: #218838; /* Slightly darker green for hover effect */
-}
-
-.user-list {
-    margin-top: 20px;
-}
-
-.user-item {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
-
-/* ===========================================================
-   NOTIFICATION CONTROLS (APPENDED)
-   =========================================================== */
-
-.notif-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.notif-controls label {
-    font-size: 14px;
-    color: #333;
-}
-
-.notif-controls input[type="datetime-local"] {
-    padding: 6px 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.notif-controls button {
-    padding: 8px 16px;
-    font-size: 14px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    background-color: #f7f7f7;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.notif-controls button:hover {
-    background-color: #e9e9e9;
-    transform: scale(1.03);
-}
-
-.notif-controls button:disabled {
-    background-color: #f1f1f1;
-    color: #888;
-    cursor: not-allowed;
-}
-
-#askBrowserPermBtn {
-    background-color: #ffc107;
-    border: none;
-    color: #212529;
-    font-weight: 600;
-}
-
-#askBrowserPermBtn:hover {
-    background-color: #e0a800;
-    color: white;
-}
-
-/* ===========================================================
-   CLASS LIST / ADD FORM
-   =========================================================== */
-.add-class-area { margin: 15px 0; }
-#addClassFormContainer input[type="time"] { padding: 6px; }
-#classFormMessage.error { color: red; }
-#classFormMessage.success { color: green; }
-
-.class-item { padding: 10px 0; border-bottom: 1px solid #eee; }
-.class-title { font-size: 1.1em; font-weight: 600; }
-.class-meta { color: #666; font-size: 0.95em; margin-top: 3px; }
-.empty-message { color: #666; padding: 12px; }
-.loading-message { color: #666; padding: 12px; }
-
-/* ===========================================================
-   NEW LAYOUT: SEPARATE BOXES FOR HEADER/BUTTONS vs CLASS LIST
-   =========================================================== */
-.controls-container {
-  background: #fff;
-  padding: 18px 22px;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);  /* darker shadow */
-  margin-bottom: 18px;
-
-  /* layout */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* move buttons to the right side */
-.controls-container .header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.controls-container .header h1 {
-  margin: 0;
-  font-size: 1.8em;
-}
-.controls-container .header div {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end; /* push buttons to right */
-}
-
-/* class list container */
-.content-container {
-  background: #fff;
-  padding: 18px 22px;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);  /* darker shadow */
-}
-
-/* subtle hover shadow lift */
-.controls-container:hover,
-.content-container:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* ===========================================================
-   MODAL STYLES
-   =========================================================== */
-.modal {
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal.open { display: flex; }
-.modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(1px);
-}
-.modal-panel {
-  position: relative;
-  z-index: 1001;
-  background: #fff;
-  width: 100%;
-  max-width: 720px;
-  border-radius: 8px;
-  padding: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-}
-.modal-close {
-  position: absolute;
-  right: 12px;
-  top: 8px;
-  border: none;
-  background: transparent;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-}
-.modal-form input[type="text"],
-.modal-form input[type="time"] {
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.button-muted {
-  background: #888;
-  color: #fff;
-}
-
-/* ===========================================================
-   RESPONSIVE
-   =========================================================== */
-@media (max-width: 640px) {
-  .modal-panel { margin: 0 12px; width: calc(100% - 24px); }
-  .controls-container, .content-container { padding: 10px; }
-}
+.toast.show{opacity:1; pointer-events:auto; transform: translateX(-50%) translateY(-4px)}

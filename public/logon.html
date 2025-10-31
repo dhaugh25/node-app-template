@@ -2,55 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CourseConnect • Sign in</title>
-  <meta name="theme-color" content="#8C1D40">
-  <link rel="icon" href="/images/sparky.png">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CourseConnect — Sign in</title>
+  <link rel="icon" href="/images/sparky.png" />
   <link rel="stylesheet" href="/css/logon.css" />
 </head>
 <body>
   <div class="container">
-    <img src="images/sparky.png" alt="CourseConnect" class="sparky-logo" />
+    <img src="/images/sparky.png" alt="CourseConnect" class="sparky-logo" />
     <h1>CourseConnect</h1>
-    <p class="subtitle">Centralized study groups, tutoring, and reminders</p>
 
     <div class="tab">
       <button class="tab-button active" id="login-tab">Log In</button>
       <button class="tab-button" id="create-account-tab">Create Account</button>
     </div>
 
-    <div id="form-container">
-      <!-- Logon Form -->
-      <form id="logon-form" class="active-form">
-        <label for="login-email">Email</label>
-        <input type="email" id="login-email" placeholder="name@asu.edu" required />
+    <form id="logon-form" class="active-form" autocomplete="on">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" placeholder="you@asu.edu" required />
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" required />
+      <label class="checkbox">
+        <input type="checkbox" id="rememberMe" />
+        <span>Remember me on this device</span>
+      </label>
+      <button type="submit" class="button">Enter</button>
+    </form>
 
-        <label for="login-password">Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" required />
+    <form id="create-account-form" autocomplete="off">
+      <label for="create-email">Email</label>
+      <input type="email" id="create-email" placeholder="you@asu.edu" required />
+      <label for="create-password">Password</label>
+      <input type="password" id="create-password" placeholder="Create a password" required />
+      <button type="submit" class="button">Create account</button>
+    </form>
 
-        <label class="row">
-          <input type="checkbox" id="rememberMe" />
-          <span>Remember me on this device</span>
-        </label>
-
-        <button type="submit" class="button">Log In</button>
-      </form>
-
-      <!-- Create Account Form -->
-      <form id="create-account-form">
-        <label for="create-email">Email</label>
-        <input type="email" id="create-email" placeholder="name@asu.edu" required />
-
-        <label for="create-password">Password</label>
-        <input type="password" id="create-password" placeholder="Create a password" required />
-
-        <button type="submit" class="button">Create Account</button>
-      </form>
-
-      <p id="message" class="message"></p>
-    </div>
+    <p id="message" class="message"></p>
   </div>
 
-  <script src="js/logon.js"></script>
+  <script src="/js/logon.js"></script>
 </body>
 </html>

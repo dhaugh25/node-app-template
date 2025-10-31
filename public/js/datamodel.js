@@ -1,161 +1,71 @@
-////////////////////////////////////////////////////////////////
-//DATAMODEL.JS
-//THIS IS YOUR "MODEL", IT INTERACTS WITH THE ROUTES ON YOUR
-//SERVER TO FETCH AND SEND DATA.  IT DOES NOT INTERACT WITH
-//THE VIEW (dashboard.html) OR THE CONTROLLER (dashboard.js)
-//DIRECTLY.  IT IS A "MIDDLEMAN" BETWEEN THE SERVER AND THE
-//CONTROLLER.  ALL IT DOES IS MANAGE DATA.
-////////////////////////////////////////////////////////////////
-
+// DATAMODEL: talks to server, caches state; no DOM work.
 const DataModel = (function () {
-    let token = null;                // Holds the JWT token
-    let users = [];                  // Cached list of user emails
-    let classes = [];                // Cached classes
+  let token = null;
 
-    // Notification prefs cache
-    let notifEnabled = true;
-    let notifPausedUntil = null;
-    let notifServerTimeISO = null;
+  // caches
+  let users = [];
+  let classes = [];
 
-    // helper to attach Authorization header
-    function authHeaders() {
-    if (!token) return { 'Content-Type': 'application/json' };
-    return {
-        'Content-Type': 'application/json',
-        // send raw token because your server expects the raw value in req.headers['authorization']
-        'Authorization': token
-    };
-}
+  // notifications (client-side gate)
+  let notifEnabled = true;
+  let notifPausedUntil = null;
 
-    // Public API
-    return {
-        // store the JWT token
-        setToken: function (newToken) {
-            token = newToken;
-        },
+  function authHeaders() {
+    return { 'Authorization': token, 'Content-Type': 'application/json' };
+  }
 
-        // ---------- Users ----------
-        getUsers: async function () {
-            if (!token) { console.error("Token is not set."); return []; }
-            try {
-                const res = await fetch('/api/users', { method: 'GET', headers: authHeaders() });
-                if (!res.ok) {
-                    console.error("Error fetching users:", await res.json().catch(()=>({})));
-                    return [];
-                }
-                const data = await res.json();
-                users = data.emails || [];
-                return users;
-            } catch (err) {
-                console.error("getUsers error:", err);
-                return [];
-            }
-        },
+  return {
+    setToken(t){ token = t; },
 
-        // ---------- Classes ----------
-        getClasses: async function () {
-            if (!token) { console.error("Token is not set."); return []; }
-            try {
-                const res = await fetch('/api/classes', { method: 'GET', headers: authHeaders() });
-                if (!res.ok) {
-                    console.error("Error fetching classes:", await res.json().catch(()=>({})));
-                    return [];
-                }
-                const data = await res.json();
-                classes = data.classes || [];
-                return classes;
-            } catch (err) {
-                console.error("getClasses error:", err);
-                return [];
-            }
-        },
+    // USERS
+    async getUsers(){
+      if (!token) return [];
+      const r = await fetch('/api/users', { headers: { 'Authorization': 'Bearer ' + token, 'Content-Type':'application/json' }});
+      if (!r.ok) return [];
+      const data = await r.json();
+      users = data.emails || [];
+      return users;
+    },
 
-        createClass: async function (payload) {
-            // payload: { course_name, subject, days, start_time, end_time }
-            if (!token) throw new Error('Token not set');
-            try {
-                const res = await fetch('/api/classes', {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    const msg = data && data.message ? data.message : 'Error creating class';
-                    throw new Error(msg);
-                }
-                if (data.class) classes.unshift(data.class);
-                return data.class;
-            } catch (err) {
-                console.error('createClass error:', err);
-                throw err;
-            }
-        },
+    // CLASSES (Study system)
+    async getClasses(){
+      if (!token) return [];
+      const r = await fetch('/api/classes', { headers: authHeaders() });
+      if (!r.ok) return [];
+      const data = await r.json();
+      classes = data.classes || [];
+      return classes;
+    },
+    async addClass(payload){
+      const r = await fetch('/api/classes', { method:'POST', headers: authHeaders(), body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error('Save failed');
+      const data = await r.json();
+      classes.unshift(data.class);
+      return data.class;
+    },
 
-        // ---------- Notification prefs ----------
-        getNotificationPrefs: async function () {
-            if (!token) {
-                console.error("Token is not set.");
-                return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
-            }
-            try {
-                const resp = await fetch('/api/notifications/prefs', {
-                    method: 'GET',
-                    headers: authHeaders()
-                });
-                if (!resp.ok) {
-                    console.error("Error fetching notification prefs:", await resp.json().catch(() => ({})));
-                    return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
-                }
-                const d = await resp.json();
-                notifEnabled = !!d.enabled;
-                notifPausedUntil = d.pausedUntil ? new Date(d.pausedUntil) : null;
-                notifServerTimeISO = d.serverTime || null;
-                return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
-            } catch (err) {
-                console.error("getNotificationPrefs error:", err);
-                return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
-            }
-        },
+    // Notification prefs round-trip (optional; server endpoints already exist)
+    async getNotificationPrefs(){
+      if (!token) return { enabled:notifEnabled, pausedUntil:notifPausedUntil };
+      const r = await fetch('/api/notifications/prefs', { headers: authHeaders() });
+      if (!r.ok) return { enabled:notifEnabled, pausedUntil:notifPausedUntil };
+      const d = await r.json();
+      notifEnabled = !!d.enabled;
+      notifPausedUntil = d.pausedUntil ? new Date(d.pausedUntil) : null;
+      return { enabled:notifEnabled, pausedUntil:notifPausedUntil };
+    },
+    async setNotificationPrefs({enabled, pausedUntil}){
+      const r = await fetch('/api/notifications/prefs', {
+        method:'PUT', headers: authHeaders(), body: JSON.stringify({enabled, pausedUntil})
+      });
+      if (!r.ok) return { enabled:notifEnabled, pausedUntil:notifPausedUntil };
+      const d = await r.json();
+      notifEnabled = !!d.enabled;
+      notifPausedUntil = d.pausedUntil ? new Date(d.pausedUntil) : null;
+      return { enabled:notifEnabled, pausedUntil:notifPausedUntil };
+    },
 
-        setNotificationPrefs: async function ({ enabled, pausedUntil }) {
-            if (!token) {
-                console.error("Token is not set.");
-                return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
-            }
-            try {
-                const body = { enabled, pausedUntil };
-                const resp = await fetch('/api/notifications/prefs', {
-                    method: 'PUT',
-                    headers: authHeaders(),
-                    body: JSON.stringify(body)
-                });
-                if (!resp.ok) {
-                    console.error("Error updating notification prefs:", await resp.json().catch(() => ({})));
-                    return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
-                }
-                const d = await resp.json();
-                notifEnabled = !!d.enabled;
-                notifPausedUntil = d.pausedUntil ? new Date(d.pausedUntil) : null;
-                return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
-            } catch (err) {
-                console.error("setNotificationPrefs error:", err);
-                return { enabled: notifEnabled, pausedUntil: notifPausedUntil };
-            }
-        },
-
-        notificationsAllowedNow: function () {
-            if (!notifEnabled) return false;
-            if (!notifPausedUntil) return true;
-            return new Date(notifPausedUntil) <= new Date();
-        },
-
-        _notificationState: function () {
-            return { enabled: notifEnabled, pausedUntil: notifPausedUntil, serverTime: notifServerTimeISO };
-        },
-
-        // Read-only access to caches for controllers
-        _getCachedUsers: function () { return users.slice(); },
-        _getCachedClasses: function () { return classes.slice(); }
-    };
+    // expose
+    _state(){ return { users, classes, notifEnabled, notifPausedUntil }; }
+  };
 })();
