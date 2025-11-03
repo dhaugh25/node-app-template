@@ -137,8 +137,9 @@ function main() {
         <td class="td-days">${escapeHtml(c.days)}</td>
         <td class="td-start">${escapeHtml(start12)}</td>
         <td class="td-end">
-          ${escapeHtml(end12)}
-          <span class="row-menu" style="float:right;">
+          <span class="end-time">${escapeHtml(end12)}</span>
+          <span class="divider" aria-hidden="true"></span>
+          <span class="row-menu">
             <button class="menu-btn" aria-haspopup="true">⋯</button>
             <div class="menu-dropdown" role="menu" aria-hidden="true">
               <button class="menu-edit">Edit</button>

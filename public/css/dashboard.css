@@ -1,20 +1,20 @@
 :root{
-  --ink:#0f172a;           /* slate-900 */
-  --muted:#475569;         /* slate-600 */
-  --bg:#0b1020;            /* deep backdrop */
-  --card:#111827;          /* gray-900 */
-  --soft:#1f2937;          /* gray-800 */
-  --brand:#a21caf;         /* fuchsia-700 (ASU-ish pop) */
-  --brand-2:#f59e0b;       /* amber-500 */
-  --ok:#22c55e;            /* green-500 */
-  --warn:#fbbf24;          /* amber-400 */
-  --err:#ef4444;           /* red-500 */
+  --ink:#0f172a;
+  --muted:#475569;
+  --bg:#0b1020;
+  --card:#111827;
+  --soft:#1f2937;
+  --brand:#a21caf;
+  --brand-2:#f59e0b;
+  --ok:#22c55e;
+  --warn:#fbbf24;
+  --err:#ef4444;
   --ring: rgba(162, 28, 175, .35);
+  --table-border: rgba(255,255,255,.06); /* consistent separators */
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
-
 body{
   margin:0;
   font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
@@ -34,9 +34,7 @@ body{
   border-bottom:1px solid rgba(255,255,255,.05);
   backdrop-filter: blur(8px);
 }
-.brand{
-  display:flex; align-items:center; gap:.6rem; font-weight:800; letter-spacing:.2px;
-}
+.brand{ display:flex; align-items:center; gap:.6rem; font-weight:800; letter-spacing:.2px; }
 .brand img{width:26px; height:26px; border-radius:6px}
 .brand span{font-size:15px}
 .sitebar nav{margin-left:auto; display:flex; gap:.5rem}
@@ -52,7 +50,6 @@ body{
 .btn.ok{background:linear-gradient(135deg,var(--ok),#16a34a); color:#08210f}
 
 /* ---------- Layout ---------- */
-/* Widened container slightly to give more room for the three-dots (was 1100px) */
 .container{
   max-width:1200px; margin:28px auto; padding:0 18px;
   display:grid; grid-template-columns: 1.25fr .85fr; gap:18px;
@@ -61,7 +58,7 @@ body{
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
   border:1px solid rgba(255,255,255,.08);
   border-radius:16px; padding:18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.28); /* slightly stronger shadow */
+  box-shadow: 0 10px 30px rgba(0,0,0,.28);
 }
 .card h2{margin:0 0 10px 0; font-size:18px}
 .sub{color:#cbd5e1; font-size:13px; margin:0 0 14px 0}
@@ -85,21 +82,146 @@ body{
   outline:none; box-shadow:0 0 0 0 var(--ring);
 }
 .input:focus, select:focus{box-shadow:0 0 0 4px var(--ring)}
+
+/* Table - no wrapping, ellipsis for overflow */
 .table{
   width:100%; border-collapse:separate; border-spacing:0 8px; margin-top:6px;
+  table-layout: auto;
 }
-.table th{font-size:12px; color:#9ca3af; font-weight:600; text-align:left; padding:4px 8px}
+.table th{
+  font-size:12px; color:#9ca3af; font-weight:600; text-align:left; padding:4px 8px;
+  white-space: nowrap;
+}
 .table td{
-  background:var(--soft); border:1px solid rgba(255,255,255,.06);
+  background:var(--soft);
+  border:1px solid var(--table-border);
   padding:10px 12px; font-size:14px; color:#e5e7eb;
+  white-space: nowrap;          /* prevent wrapping */
+  overflow: hidden;             /* keep content inside */
+  text-overflow: ellipsis;      /* show ellipsis if too long */
 }
 .table tr td:first-child{border-radius:10px 0 0 10px}
 .table tr td:last-child{border-radius:0 10px 10px 0}
 
-/* ---------- Notifications ---------- */
-.notif-controls{
-  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+/* ---------- Card-row and class item layout ---------- */
+.card-row {
+  display:flex; align-items:center; justify-content:space-between; padding:12px; border-radius:10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.04);
+  gap:12px;
 }
+.card-row + .card-row { margin-top:8px; }
+.card-row .class-left { flex:1; min-width: 0; }
+.card-row .class-right { margin-left:12px; position:relative; min-width:64px; display:flex; align-items:center; justify-content:flex-end; }
+
+.class-meta { color: #cbd5e1; font-size: 0.95em; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.class-title { font-size: 1.05em; font-weight: 700; color:#fff; }
+
+/* ---------- End column: left-justified end time, tall divider, right menu ---------- */
+.table td.td-end {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* time left, menu right */
+  gap: 8px;
+  position: relative;
+  padding-right: 12px;
+  min-width: 180px;                /* give enough breathing room */
+  box-sizing: border-box;
+}
+
+/* End-time container (left) */
+.td-end .end-time {
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 6px;
+  white-space: nowrap; /* ensure time doesn't wrap */
+}
+
+/* Divider: as tall as possible inside the cell interior */
+.td-end .divider {
+  flex: 0 0 1px;                     /* fixed width */
+  height: calc(100% - 8px);          /* fill most of the cell height */
+  background: var(--table-border);   /* same color as cell borders */
+  align-self: center;
+  border-radius: 1px;
+  margin: 0 10px;
+}
+
+/* If you want divider to literally stretch to the inner edges, use this alternative:
+   height: 100%;
+   margin: 0 8px;
+   align-self: stretch;
+   But calc(100% - 8px) avoids touching rounded corners for a cleaner look.
+*/
+
+/* Three-dot menu container (fixed width to keep buttons aligned) */
+.row-menu {
+  flex: 0 0 56px;                    /* reserve consistent width */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* menu button */
+.menu-btn {
+  background: #2f2f2f;
+  color: #fff;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+}
+.menu-btn:hover { background: #242424; transform: translateY(-1px); }
+
+/* Dropdown */
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.32);
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  z-index: 9999;
+  padding: 6px;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.menu-dropdown[aria-hidden="true"] {
+  display: none;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.menu-dropdown:not([aria-hidden="true"]) {
+  opacity: 1;
+  transform: translateY(0);
+}
+.menu-dropdown button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-radius: 6px;
+}
+.menu-dropdown button:hover { background: #4f4f4f; }
+
+/* ---------- Notifications ---------- */
+.notif-controls{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .switch{
   --h:22px;
   inline-size: 44px; block-size:var(--h);
@@ -118,7 +240,7 @@ body{
 .loading-message,.error-message{font-size:14px; color:#cbd5e1; opacity:.9}
 .kicker{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#a78bfa}
 
-/* ---------- Toast (in-app) ---------- */
+/* ---------- Toast ---------- */
 .toast{
   position:fixed; left:50%; transform:translateX(-50%);
   bottom:18px; background:#111827; color:#e5e7eb;
@@ -127,117 +249,10 @@ body{
 }
 .toast.show{opacity:1; pointer-events:auto; transform: translateX(-50%) translateY(-4px)}
 
-
-/* ---------- Card-row and class item layout ---------- */
-/* Make class rows more distinct and ensure times don't wrap (AM/PM stays with time) */
-.card-row { 
-  display:flex; 
-  align-items:center; 
-  justify-content:space-between; 
-  padding:12px; 
-  border-radius:10px;
-  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-  border:1px solid rgba(255,255,255,.04);
-  gap:12px;
-}
-.card-row + .card-row { margin-top:8px; }
-.card-row .class-left { flex:1; min-width: 0; } /* allow truncation inside */
-.card-row .class-right { margin-left:12px; position:relative; min-width:64px; display:flex; align-items:center; justify-content:flex-end; }
-
-/* Prevent time text from wrapping (keeps "1:30 PM – 2:45 PM" together).
-   Use ellipsis if it overflows the available space. */
-.class-meta {
-  color: #cbd5e1;
-  font-size: 0.95em;
-  margin-top: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* title and meta */
-.class-title { font-size: 1.05em; font-weight: 700; color:#fff; }
-.class-meta { color:#bfcfe0; }
-
-/* ---------- three-dots menu and dropdown (updated styles) ---------- */
-/* Make the menu button a dark rounded pill with white dots */
-.menu-btn {
-  background: #2f2f2f;       /* dark circle/pill */
-  color: #fff;               /* white dots */
-  border: none;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 8px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
-}
-
-/* hover & focus */
-.menu-btn:hover { background: #242424; transform: translateY(-1px); }
-.menu-btn:focus { outline: 2px solid rgba(255,255,255,0.12); outline-offset: 2px; }
-
-/* Dropdown: gray background, white text, rounded */
-.menu-dropdown {
-  position: absolute;
-  top: 100%;               /* right below the 3 dots */
-  right: 0;                /* align to the right edge of the button */
-  margin-top: 6px;         /* small spacing */
-  background: #3a3a3a;
-  border: 1px solid #4a4a4a;
-  border-radius: 8px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.32);
-  display: flex;
-  flex-direction: column;
-  min-width: 140px;
-  z-index: 9999;
-  padding: 6px;
-  transition: opacity .12s ease, transform .12s ease;
-}
-
-.menu-dropdown[aria-hidden="true"] {
-  display: none;
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-/* Make sure the 3 dots container is the positioning context */
-.row-menu {
-  position: relative;
-  display: inline-block;
-}
-/* Buttons inside dropdown use white text */
-.menu-dropdown button {
-  background: transparent;
-  border: none;
-  color: #fff;                 /* white text */
-  text-align: left;
-  padding: 10px 12px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  border-radius: 6px;
-}
-.menu-dropdown button:hover { background: #4f4f4f; }
-
-/* For table row menu */
-.row-actions .row-menu { position: relative; display:inline-block; }
-
-/* Small accessibility tweak: keep menus closed until toggled */
-.menu-dropdown[aria-hidden="true"] { display: none; }
-
-/* ---------- small drag/UX classes ---------- */
-.draggable { cursor: grab; }
-.draggable:active { cursor: grabbing; }
-.draggable.drag-over { outline: 2px dashed rgba(255,255,255,0.08); background: rgba(255,255,255,0.01); }
-
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .container { grid-template-columns: 1fr; padding:0 12px; max-width: 92%; }
-  .class-meta { white-space: normal; } /* allow wrapping on narrow screens */
-  .card-row .class-right { min-width:56px; }
+  .td-end .divider { height: calc(100% - 6px); }
   .menu-dropdown { right: 8px; left: auto; min-width: 120px; }
+  .table td { font-size: 13px; } /* slightly reduce font on small screens */
 }
-
