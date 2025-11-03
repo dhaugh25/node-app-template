@@ -131,16 +131,14 @@ function main() {
       const start12 = to12Hour(c.start_time);
       const end12 = to12Hour(c.end_time);
 
-     tr.innerHTML = `
+    tr.innerHTML = `
       <td class="td-course">${escapeHtml(c.course_name)}</td>
       <td class="td-subject">${escapeHtml(c.subject)}</td>
       <td class="td-days">${escapeHtml(c.days)}</td>
       <td class="td-start">${escapeHtml(start12)}</td>
-
-      <!-- END cell: shows time, divider, and menu -->
       <td class="td-end">
         <span class="end-time">${escapeHtml(end12)}</span>
-        <span class="divider" aria-hidden="true"></span>
+        <!-- keep .divider removed/hidden in CSS; we rely on td::after now -->
         <span class="row-menu">
           <button class="menu-btn" aria-haspopup="true">⋯</button>
           <div class="menu-dropdown" role="menu" aria-hidden="true">
