@@ -122,14 +122,35 @@ function main() {
 
   // Renders table rows for classes (rebuilds tbody)
   function renderClassesTable(classesArray) {
-    if (!classesBody) return;
-    classesBody.innerHTML = ''; // clear
+  if (!classesBody) return;
+  classesBody.innerHTML = ''; // clear
 
-    classesArray.forEach(c => {
-      const tr = document.createElement('tr');
+  // helper to close any floating menu (single shared copy)
+  function closeFloatingMenu() {
+    const existing = document.querySelector('.floating-dropdown');
+    if (existing) {
+      existing.classList.add('hidden');
+      setTimeout(() => existing.remove(), 120);
+    }
+    document.removeEventListener('click', onDocClick);
+    window.removeEventListener('resize', closeFloatingMenu);
+    window.removeEventListener('scroll', closeFloatingMenu, true);
+    document.removeEventListener('keydown', onKeyDown);
+  }
+  function onDocClick(e) {
+    const fd = document.querySelector('.floating-dropdown');
+    if (!fd) return;
+    if (!fd.contains(e.target)) closeFloatingMenu();
+  }
+  function onKeyDown(e) {
+    if (e.key === 'Escape') closeFloatingMenu();
+  }
 
-      const start12 = to12Hour(c.start_time);
-      const end12 = to12Hour(c.end_time);
+  classesArray.forEach(c => {
+    const tr = document.createElement('tr');
+
+    const start12 = to12Hour(c.start_time);
+    const end12 = to12Hour(c.end_time);
 
     tr.innerHTML = `
       <td class="td-course">${escapeHtml(c.course_name)}</td>
@@ -138,57 +159,100 @@ function main() {
       <td class="td-start">${escapeHtml(start12)}</td>
       <td class="td-end">
         <span class="end-time">${escapeHtml(end12)}</span>
-        <!-- keep .divider removed/hidden in CSS; we rely on td::after now -->
         <span class="row-menu">
           <button class="menu-btn" aria-haspopup="true">⋯</button>
-          <div class="menu-dropdown" role="menu" aria-hidden="true">
-            <button class="menu-edit">Edit</button>
-            <button class="menu-delete">Remove</button>
-          </div>
+          <!-- inline menu removed (we'll use floating); keep markup minimal -->
         </span>
       </td>
     `;
 
-      // wire menu buttons
-      const menuBtn = tr.querySelector('.menu-btn');
-      const dropdown = tr.querySelector('.menu-dropdown');
-      const editBtn = tr.querySelector('.menu-edit');
-      const deleteBtn = tr.querySelector('.menu-delete');
+    // wire menu button (floating dropdown appended to body)
+    const menuBtn = tr.querySelector('.menu-btn');
 
-      menuBtn?.addEventListener('click', (ev) => {
+    if (menuBtn) {
+      menuBtn.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        const open = dropdown.getAttribute('aria-hidden') === 'false';
-        closeAllDropdowns();
-        if (!open) dropdown.setAttribute('aria-hidden', 'false');
+        closeFloatingMenu(); // close any other open menus
+
+        // build floating dropdown
+        const fd = document.createElement('div');
+        fd.className = 'floating-dropdown hidden';
+
+        const editBtnF = document.createElement('button');
+        editBtnF.type = 'button';
+        editBtnF.className = 'menu-edit';
+        editBtnF.textContent = 'Edit';
+        fd.appendChild(editBtnF);
+
+        const delBtnF = document.createElement('button');
+        delBtnF.type = 'button';
+        delBtnF.className = 'menu-delete';
+        delBtnF.textContent = 'Remove';
+        fd.appendChild(delBtnF);
+
+        document.body.appendChild(fd);
+
+        // position next to clicked button
+        const btnRect = menuBtn.getBoundingClientRect();
+
+        fd.style.opacity = '0';
+        fd.style.pointerEvents = 'none';
+
+        requestAnimationFrame(() => {
+          const fdRect = fd.getBoundingClientRect();
+          let top = btnRect.bottom + 6;
+          let left = btnRect.right - fdRect.width;
+
+          // avoid overflowing right edge
+          const overflowRight = left + fdRect.width - window.innerWidth;
+          if (overflowRight > 8) left = Math.max(8, left - overflowRight - 8);
+
+          // if not enough space below, place above
+          if (top + fdRect.height > window.innerHeight - 8) {
+            top = btnRect.top - fdRect.height - 6;
+            if (top < 8) top = 8;
+          }
+
+          fd.style.left = `${Math.round(left)}px`;
+          fd.style.top = `${Math.round(top)}px`;
+
+          fd.classList.remove('hidden');
+          fd.style.opacity = '';
+          fd.style.pointerEvents = '';
+
+          // close handlers
+          document.addEventListener('click', onDocClick);
+          window.addEventListener('resize', closeFloatingMenu);
+          window.addEventListener('scroll', closeFloatingMenu, true);
+          document.addEventListener('keydown', onKeyDown);
+        });
+
+        // wire the floating buttons' behavior using your existing functions
+        editBtnF.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeFloatingMenu();
+          startEditing(c);
+        });
+
+        delBtnF.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          closeFloatingMenu();
+          if (!confirm(`Remove class "${c.subject}: ${c.course_name}"?`)) return;
+          try {
+            await DataModel.deleteClass(c.id);
+            tr.remove();
+          } catch (err) {
+            console.error('Delete failed', err);
+            alert('Failed to delete class.');
+          }
+        });
       });
+    }
 
-      // close menus on outside click
-      document.addEventListener('click', closeAllDropdowns);
-
-      editBtn?.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        closeAllDropdowns();
-        startEditing(c);
-      });
-
-      deleteBtn?.addEventListener('click', async (ev) => {
-        ev.stopPropagation();
-        closeAllDropdowns();
-        if (!confirm(`Remove class "${c.subject}: ${c.course_name}"?`)) return;
-        try {
-          await DataModel.deleteClass(c.id);
-          // remove row from DOM (optimistic)
-          tr.remove();
-        } catch (err) {
-          console.error('Delete failed', err);
-          alert('Failed to delete class.');
-        }
-      });
-
-      classesBody.appendChild(tr);
-    });
-  }
-
+    // append the row to the table body
+    classesBody.appendChild(tr);
+  }); // end forEach
+} // end renderClassesTable
   function closeAllDropdowns() {
     document.querySelectorAll('.menu-dropdown').forEach(d => d.setAttribute('aria-hidden', 'true'));
   }

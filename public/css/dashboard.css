@@ -312,3 +312,39 @@ body{
 
 /* hide any previous divider element if present */
 .td-end .divider { display: none !important; }
+
+.floating-dropdown {
+  position: fixed;
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+  padding: 6px;
+  min-width: 140px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  transform-origin: top right;
+  transition: opacity .12s ease, transform .12s ease;
+}
+
+.floating-dropdown.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px) scale(.98);
+}
+
+.floating-dropdown button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-radius: 6px;
+}
+.floating-dropdown button:hover { background: #4f4f4f; }
+
+/* keep the original in-table .menu-dropdown rules (for fallback) but hidden by default */
+.menu-dropdown { display: none !important; }
