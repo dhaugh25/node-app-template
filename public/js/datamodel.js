@@ -13,12 +13,9 @@ const DataModel = (function () {
   // === single place to control auth header format ===
   function authHeaders() {
     if (!token) return { 'Content-Type': 'application/json' };
-    // NOTE: server historically expected raw token (no "Bearer "). If you later
-    // change server to accept Bearer tokens, update this line to:
-    // 'Authorization': 'Bearer ' + token
     return {
       'Content-Type': 'application/json',
-      'Authorization': token
+      'Authorization': 'Bearer ' + token
     };
   }
 

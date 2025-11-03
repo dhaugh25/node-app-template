@@ -45,7 +45,9 @@ async function createConnection() {
 
 // **Authorization Middleware: Verify JWT Token and Check User in Database**
 async function authenticateToken(req, res, next) {
-    const token = req.headers['authorization'];
+    // Accept either "Bearer <token>" or the raw token string
+    const raw = (req.headers['authorization'] || '').trim();
+    const token = raw.startsWith('Bearer ') ? raw.slice(7).trim() : raw;
 
     if (!token) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });

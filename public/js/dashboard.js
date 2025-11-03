@@ -2,45 +2,39 @@
 document.addEventListener('DOMContentLoaded', main);
 
 function main() {
-  // Elements (match your dashboard.html)
+  // DOM elements (match your dashboard.html IDs)
   const refreshButton = document.getElementById('refreshButton');
   const notifyToggleBtn = document.getElementById('notifToggleBtn');
   const logoutButton = document.getElementById('logoutButton');
 
-  const classForm = document.getElementById('classForm');      // form id in HTML
-  const courseInput = document.getElementById('course_name'); // note underscore names in HTML
+  const classForm = document.getElementById('classForm');
+  const courseInput = document.getElementById('course_name');
   const subjectInput = document.getElementById('subject');
   const daysSelect = document.getElementById('days');
   const startInput = document.getElementById('start_time');
   const endInput = document.getElementById('end_time');
   const classMsg = document.getElementById('classMsg');
+  const classesBody = document.getElementById('classesBody');
 
-  const classesBody = document.getElementById('classesBody'); // tbody where rows are rendered
-
-  // submit button inside the form (used to change label)
   const submitBtn = classForm ? classForm.querySelector('button[type="submit"]') : null;
 
-  // track edit mode: null = adding, id = editing existing
+  // editing state
   let editingId = null;
 
-  // service worker safe registration (harmless if already registered)
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  }
+  // Register SW if available (harmless)
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
-  // check token & set DataModel
+  // Auth token (must exist)
   const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
   if (!token) {
+    console.warn('No token found — redirecting to login.');
     return window.location.href = '/';
   }
   DataModel.setToken(token);
 
   // Wire header buttons
-  refreshButton?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    await loadAndRenderClasses();
-  });
-
+  refreshButton?.addEventListener('click', async (e) => { e.preventDefault(); await loadAndRenderClasses(); });
+  logoutButton?.addEventListener('click', () => { localStorage.removeItem('jwtToken'); sessionStorage.removeItem('jwtToken'); window.location.href = '/'; });
   notifyToggleBtn?.addEventListener('click', async () => {
     if (typeof enableNotifications === 'function') {
       const ok = await enableNotifications();
@@ -51,13 +45,7 @@ function main() {
     }
   });
 
-  logoutButton?.addEventListener('click', () => {
-    localStorage.removeItem('jwtToken');
-    sessionStorage.removeItem('jwtToken');
-    window.location.href = '/';
-  });
-
-  // Form submit: add or update depending on editingId
+  // Form submit: add or update
   classForm?.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     clearMessage();
@@ -70,7 +58,7 @@ function main() {
       end_time: (endInput?.value || '').trim()
     };
 
-    // client validation
+    // Validation
     if (!payload.course_name || !payload.subject || !payload.days || !payload.start_time || !payload.end_time) {
       showMessage('Please fill in all required fields.', true);
       return;
@@ -82,58 +70,64 @@ function main() {
 
     try {
       if (editingId) {
-        // update existing
         await DataModel.updateClass(editingId, payload);
-        // clear the form & switch back to Add mode
         classForm.reset();
         editingId = null;
         if (submitBtn) submitBtn.textContent = 'Add Class';
         showMessage('Class updated successfully.', false);
-        await loadAndRenderClasses();
       } else {
-        // create new
         await DataModel.addClass(payload);
-        // clear the form after add
         classForm.reset();
         if (submitBtn) submitBtn.textContent = 'Add Class';
         showMessage('Class added.', false);
-        await loadAndRenderClasses();
       }
+      // refresh to show server truth
+      await loadAndRenderClasses();
     } catch (err) {
       console.error('Save error', err);
-      showMessage((err && err.message) ? err.message : 'Save failed', true);
-      // attempt refresh anyway so UI matches DB
-      try { await loadAndRenderClasses(); } catch (e) { console.error('refresh failed', e); }
+      showMessage(err.message || 'Save failed', true);
+      // attempt a refresh anyway so UI matches DB
+      try { await loadAndRenderClasses(); } catch(e){ console.error('refresh after save failed', e); }
     }
   });
 
-  // Load + render on start
+  // Load initially
   loadAndRenderClasses();
 
-  // ---------- Functions ----------
+  // ----------------- Functions -----------------
 
   async function loadAndRenderClasses() {
     if (!classesBody) return;
     classesBody.innerHTML = `<tr><td colspan="5" class="sub">Loading...</td></tr>`;
     try {
-      const classes = await DataModel.getClasses();
-      console.log('dashboard.loadAndRenderClasses: got classes array length =', (classes || []).length, classes);
-      // If classes is empty array, show a helpful message (not just "No classes yet")
-      if (!classes || classes.length === 0) {
-        classesBody.innerHTML = `<tr><td colspan="5" class="sub">No classes returned from server. (Check console/Network tab for /api/classes.)</td></tr>`;
+      const classesArray = await DataModel.getClasses();
+      // defensive: ensure an array
+      if (!Array.isArray(classesArray)) {
+        console.warn('getClasses did not return an array, got:', classesArray);
+        classesBody.innerHTML = `<tr><td colspan="5" class="sub">Unexpected server response — see console.</td></tr>`;
         return;
       }
-      renderClassesTable(classes);
+      console.log('dashboard: loaded classes', classesArray.length);
+      if (classesArray.length === 0) {
+        classesBody.innerHTML = `<tr><td colspan="5" class="sub">No classes yet.</td></tr>`;
+        return;
+      }
+      // render
+      renderClassesTable(classesArray);
     } catch (err) {
       console.error('Failed to load classes', err);
-      classesBody.innerHTML = `<tr><td colspan="5" class="sub">Failed loading classes — see console for details.</td></tr>`;
+      classesBody.innerHTML = `<tr><td colspan="5" class="sub">Failed loading classes — see console.</td></tr>`;
     }
   }
 
-    classes.forEach(c => {
+  // Renders table rows for classes (rebuilds tbody)
+  function renderClassesTable(classesArray) {
+    if (!classesBody) return;
+    classesBody.innerHTML = ''; // clear
+
+    classesArray.forEach(c => {
       const tr = document.createElement('tr');
 
-      // Display times in 12-hour format for readability
       const start12 = to12Hour(c.start_time);
       const end12 = to12Hour(c.end_time);
 
@@ -142,53 +136,47 @@ function main() {
         <td class="td-subject">${escapeHtml(c.subject)}</td>
         <td class="td-days">${escapeHtml(c.days)}</td>
         <td class="td-start">${escapeHtml(start12)}</td>
-        <td class="td-end">${escapeHtml(end12)}
-          <span style="float:right; margin-left:8px;">
-            <div class="row-menu" style="display:inline-block; position:relative;">
-              <button class="menu-btn" aria-haspopup="true">⋯</button>
-              <div class="menu-dropdown" role="menu" aria-hidden="true">
-                <button class="menu-edit">Edit</button>
-                <button class="menu-delete">Remove</button>
-              </div>
+        <td class="td-end">
+          ${escapeHtml(end12)}
+          <span class="row-menu" style="float:right;">
+            <button class="menu-btn" aria-haspopup="true">⋯</button>
+            <div class="menu-dropdown" role="menu" aria-hidden="true">
+              <button class="menu-edit">Edit</button>
+              <button class="menu-delete">Remove</button>
             </div>
           </span>
         </td>
       `;
 
-      // attach handlers for the menu (Edit/Delete)
+      // wire menu buttons
       const menuBtn = tr.querySelector('.menu-btn');
       const dropdown = tr.querySelector('.menu-dropdown');
       const editBtn = tr.querySelector('.menu-edit');
       const deleteBtn = tr.querySelector('.menu-delete');
 
-      // toggle dropdown
       menuBtn?.addEventListener('click', (ev) => {
         ev.stopPropagation();
         const open = dropdown.getAttribute('aria-hidden') === 'false';
         closeAllDropdowns();
-        if (!open) {
-          dropdown.setAttribute('aria-hidden', 'false');
-        }
+        if (!open) dropdown.setAttribute('aria-hidden', 'false');
       });
 
-      // close dropdown when clicking outside
+      // close menus on outside click
       document.addEventListener('click', closeAllDropdowns);
 
-      // Edit action
       editBtn?.addEventListener('click', (ev) => {
         ev.stopPropagation();
         closeAllDropdowns();
         startEditing(c);
       });
 
-      // Delete action
       deleteBtn?.addEventListener('click', async (ev) => {
         ev.stopPropagation();
         closeAllDropdowns();
         if (!confirm(`Remove class "${c.subject}: ${c.course_name}"?`)) return;
         try {
           await DataModel.deleteClass(c.id);
-          // immediate UI removal
+          // remove row from DOM (optimistic)
           tr.remove();
         } catch (err) {
           console.error('Delete failed', err);
@@ -205,28 +193,24 @@ function main() {
   }
 
   function startEditing(classObj) {
-    // Put form into edit mode and prefill values
     editingId = classObj.id;
     courseInput.value = classObj.course_name || '';
     subjectInput.value = classObj.subject || '';
     daysSelect.value = classObj.days || '';
     startInput.value = normalizeTimeForInput(classObj.start_time || '');
     endInput.value = normalizeTimeForInput(classObj.end_time || '');
-    // Switch button text to Update Class
     if (submitBtn) submitBtn.textContent = 'Update Class';
-    // clear any previous message (we won't show an "editing" helper)
     clearMessage();
-    // scroll to top of form for convenience
     courseInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  // Utilities
+  // Helpers
   function showMessage(msg, isError = false) {
     if (!classMsg) return;
     classMsg.textContent = msg;
     classMsg.style.color = isError ? 'var(--err, #f44336)' : '#cbd5e1';
   }
-  function clearMessage() { if (classMsg) { classMsg.textContent = ''; } }
+  function clearMessage() { if (classMsg) classMsg.textContent = ''; }
 
   function normalizeTimeForInput(t) {
     if (!t) return '';
@@ -238,9 +222,7 @@ function main() {
   function to12Hour(timeStr) {
     if (!timeStr) return '';
     const s = String(timeStr).trim();
-    if (/[ap]m$/i.test(s)) {
-      return s.toUpperCase();
-    }
+    if (/[ap]m$/i.test(s)) return s.toUpperCase();
     const parts = s.split(':');
     let h = parseInt(parts[0], 10);
     let m = parts[1] ? parts[1].padStart(2,'0') : '00';
@@ -257,4 +239,4 @@ function main() {
       "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;'
     }[s]));
   }
-}
+} // end main
