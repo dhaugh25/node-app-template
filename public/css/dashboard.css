@@ -256,3 +256,79 @@ body{
   .menu-dropdown { right: 8px; left: auto; min-width: 120px; }
   .table td { font-size: 13px; } /* slightly reduce font on small screens */
 }
+
+.table td.td-end {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  position: relative !important;
+  padding-right: 12px !important;
+  min-width: 160px !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+
+.td-end .end-time {
+  flex: 0 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 6px;
+}
+
+/* make divider full height of cell interior; ensures visibility */
+.td-end .divider {
+  flex: 0 0 1.5px !important;        /* same thickness everywhere */
+  align-self: stretch !important;    /* stretch to full cell height */
+  height: 100% !important;
+  margin: 0 10px !important;
+  background: var(--table-border) !important;
+  border-radius: 0 !important;       /* no rounding so ends meet cleanly */
+  opacity: 1 !important;
+}
+
+/* ensure the menu column has fixed width so buttons line up */
+.row-menu {
+  flex: 0 0 56px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+.td-end .row-menu {
+  /* keep reserved width so buttons align across rows */
+  flex: 0 0 56px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  padding-left: 14px; /* space so the line doesn't overlap the button */
+  box-sizing: border-box;
+}
+
+/* vertical line drawn inside the menu container */
+.td-end .row-menu::before {
+  content: "";
+  position: absolute;
+  left: 0px;                 /* slight inset from the left edge of row-menu */
+  top: 0px;                  /* inset to avoid rounded corners */
+  bottom: 0px;               /* inset to avoid rounded corners */
+  width: 1.5px;              /* thickness that matches other grid lines */
+  background: var(--table-border, rgba(255,255,255,0.06));
+  border-radius: 0;
+  z-index: 2;
+  display: block;
+  opacity: 1;
+}
+
+/* ensure the actual button stays centered and clickable */
+.td-end .row-menu .menu-btn {
+  position: relative; /* sits above the pseudo-element */
+  z-index: 3;
+}
+
+/* If you still have a <span class="divider"> element, hide it to avoid duplication */
+.td-end .divider { display: none !important; }
+
