@@ -52,15 +52,16 @@ body{
 .btn.ok{background:linear-gradient(135deg,var(--ok),#16a34a); color:#08210f}
 
 /* ---------- Layout ---------- */
+/* Widened container slightly to give more room for the three-dots (was 1100px) */
 .container{
-  max-width:1100px; margin:28px auto; padding:0 18px;
+  max-width:1200px; margin:28px auto; padding:0 18px;
   display:grid; grid-template-columns: 1.25fr .85fr; gap:18px;
 }
 .card{
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
   border:1px solid rgba(255,255,255,.08);
   border-radius:16px; padding:18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  box-shadow: 0 10px 30px rgba(0,0,0,.28); /* slightly stronger shadow */
 }
 .card h2{margin:0 0 10px 0; font-size:18px}
 .sub{color:#cbd5e1; font-size:13px; margin:0 0 14px 0}
@@ -125,3 +126,107 @@ body{
   box-shadow:0 12px 30px rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:.25s;
 }
 .toast.show{opacity:1; pointer-events:auto; transform: translateX(-50%) translateY(-4px)}
+
+
+/* ---------- Card-row and class item layout ---------- */
+/* Make class rows more distinct and ensure times don't wrap (AM/PM stays with time) */
+.card-row { 
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between; 
+  padding:12px; 
+  border-radius:10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.04);
+  gap:12px;
+}
+.card-row + .card-row { margin-top:8px; }
+.card-row .class-left { flex:1; min-width: 0; } /* allow truncation inside */
+.card-row .class-right { margin-left:12px; position:relative; min-width:64px; display:flex; align-items:center; justify-content:flex-end; }
+
+/* Prevent time text from wrapping (keeps "1:30 PM – 2:45 PM" together).
+   Use ellipsis if it overflows the available space. */
+.class-meta {
+  color: #cbd5e1;
+  font-size: 0.95em;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* title and meta */
+.class-title { font-size: 1.05em; font-weight: 700; color:#fff; }
+.class-meta { color:#bfcfe0; }
+
+/* ---------- three-dots menu and dropdown (updated styles) ---------- */
+/* Make the menu button a dark rounded pill with white dots */
+.menu-btn {
+  background: #2f2f2f;       /* dark circle/pill */
+  color: #fff;               /* white dots */
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+}
+
+/* hover & focus */
+.menu-btn:hover { background: #242424; transform: translateY(-1px); }
+.menu-btn:focus { outline: 2px solid rgba(255,255,255,0.12); outline-offset: 2px; }
+
+/* Dropdown: gray background, white text, rounded */
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #3a3a3a;          /* darker gray background */
+  border: 1px solid #4a4a4a;    /* subtle border */
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.32);
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  z-index: 1200;
+  padding: 6px 6px;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.menu-dropdown[aria-hidden="true"] { display: none; opacity:0; transform:translateY(-6px); }
+
+/* Buttons inside dropdown use white text */
+.menu-dropdown button {
+  background: transparent;
+  border: none;
+  color: #fff;                 /* white text */
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-radius: 6px;
+}
+.menu-dropdown button:hover { background: #4f4f4f; }
+
+/* For table row menu */
+.row-actions .row-menu { position: relative; display:inline-block; }
+
+/* Small accessibility tweak: keep menus closed until toggled */
+.menu-dropdown[aria-hidden="true"] { display: none; }
+
+/* ---------- small drag/UX classes ---------- */
+.draggable { cursor: grab; }
+.draggable:active { cursor: grabbing; }
+.draggable.drag-over { outline: 2px dashed rgba(255,255,255,0.08); background: rgba(255,255,255,0.01); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; padding:0 12px; max-width: 92%; }
+  .class-meta { white-space: normal; } /* allow wrapping on narrow screens */
+  .card-row .class-right { min-width:56px; }
+  .menu-dropdown { right: 8px; left: auto; min-width: 120px; }
+}
+
