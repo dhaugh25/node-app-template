@@ -123,19 +123,33 @@ function renderClasses(rows){
 function prependClassRow(row){
   const body = $('#classesBody');
   const tr = document.createElement('tr');
+  const start12 = format12h(row.start_time);
+  const end12 = format12h(row.end_time);
+
   tr.innerHTML = `
     <td>${esc(row.course_name)}</td>
     <td>${esc(row.subject)}</td>
     <td>${esc(row.days)}</td>
-    <td>${esc(row.start_time)}</td>
-    <td>${esc(row.end_time)}</td>`;
+    <td>${esc(start12)}</td>
+    <td>${esc(end12)}</td>`;
   body?.prepend(tr);
 }
+
 
 // ----- Utility -----
 function $(sel){ return document.querySelector(sel); }
 function v(sel){ return (document.querySelector(sel)?.value || '').trim(); }
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+//fix: from 24hr to 12hr frame
+function format12h(timeStr){
+  if (!timeStr) return '';
+  const [hour, minute] = timeStr.split(':').map(Number);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 || 12;
+  return `${h12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+}
+
 
 // in-app toast
 let toastTimer = null;
