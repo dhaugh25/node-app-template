@@ -4,20 +4,42 @@
   <meta charset="utf-8" />
   <title>CourseConnect • Profile & Preferences</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="icon" href="/images/sparky.png">
+  <link rel="icon" href="/images/sparky.png" />
   <link rel="stylesheet" href="/css/dashboard.css" />
+  <style>
+    main.page {
+      max-width: 1000px;
+      margin: 28px auto;
+      padding: 0 18px;
+      color: #e8e8e8;
+    }
+    h2 {
+      color: #ffcc33;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 20px;
+    }
+  </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <img src="/images/sparky.png" alt="">
-        <div><div class="name">CourseConnect</div><div class="tag">Profile</div></div>
-      </div>
-      <div class="nav-actions">
-        <a class="btn" href="/dashboard">Dashboard</a>
-        <a class="btn primary" href="/">Log out</a>
-      </div>
+  <!-- Unified top bar -->
+  <header class="sitebar">
+    <div class="brand">
+      <img src="/images/sparky.png" alt="CourseConnect" />
+      <span>CourseConnect</span>
+      <span class="kicker">Profile</span>
+    </div>
+
+    <nav class="main-nav">
+      <a href="/dashboard.html" class="nav-link">Dashboard</a>
+      <a href="/profile.html" class="nav-link">Profile</a>
+      <a href="/resources.html" class="nav-link">Resources</a>
+    </nav>
+
+    <div class="actions">
+      <button id="logoutButton" class="btn warn">Log Out</button>
     </div>
   </header>
 
@@ -50,7 +72,18 @@
     </section>
   </main>
 
+  <div id="toast" class="toast">Saved</div>
+
   <script src="/js/datamodel.js"></script>
   <script src="/js/profile.js"></script>
+  <script>
+    // Logout handling for consistency
+    document.querySelector('#logoutButton')?.addEventListener('click', () => {
+      localStorage.removeItem('jwtToken');
+      sessionStorage.removeItem('jwtToken');
+      window.location.href = '/';
+    });
+  </script>
 </body>
 </html>
+

@@ -9,18 +9,37 @@
 </head>
 <body>
   <!-- Top bar -->
-  <header class="sitebar">
-    <div class="brand">
-      <img src="/images/sparky.png" alt="CourseConnect" />
-      <span>CourseConnect</span>
-      <span class="kicker">Dashboard</span>
-    </div>
-    <nav>
-      <button id="refreshButton" class="btn">Refresh</button>
-      <button id="notifToggleBtn" class="btn ghost">Enable Notifications</button>
-      <button id="logoutButton" class="btn warn">Log Out</button>
-    </nav>
-  </header>
+<header class="sitebar">
+  <div class="brand">
+    <img src="/images/sparky.png" alt="CourseConnect" />
+    <span>CourseConnect</span>
+    <span class="kicker">Dashboard</span>
+  </div>
+
+  <!-- Navigation links -->
+  <nav class="main-nav">
+    <a href="/dashboard.html" class="nav-link">Dashboard</a>
+    <a href="/profile.html" class="nav-link">Profile</a>
+    <a href="/resources.html" class="nav-link">Resources</a>
+  </nav>
+
+  <!-- Dashboard-specific buttons -->
+  <div class="actions">
+    <button id="refreshButton" class="btn">Refresh</button>
+    <button id="notifToggleBtn" class="btn ghost">Enable Notifications</button>
+    <button id="logoutButton" class="btn warn">Log Out</button>
+  </div>
+</header>
+
+
+  <nav class="navbar">
+  <div class="nav-container">
+    <a href="/dashboard.html" class="nav-item">Dashboard</a>
+    <a href="/profile.html" class="nav-item">Profile</a>
+    <a href="/resources.html" class="nav-item">Resources</a>
+  </div>
+</nav>
+
 
   <main class="container">
     <!-- Left: Study System / Classes -->
