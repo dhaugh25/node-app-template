@@ -45,7 +45,9 @@ async function createConnection() {
 
 // **Authorization Middleware: Verify JWT Token and Check User in Database**
 async function authenticateToken(req, res, next) {
-    const token = req.headers['authorization'];
+    // Accept either "Bearer <token>" or the raw token string
+    const raw = (req.headers['authorization'] || '').trim();
+    const token = raw.startsWith('Bearer ') ? raw.slice(7).trim() : raw;
 
     if (!token) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });
@@ -317,5 +319,70 @@ app.post('/api/classes', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error saving class.' });
+  }
+});
+
+// Update class
+app.put('/api/classes/:id', authenticateToken, async (req, res) => {
+  const id = req.params.id;
+  const { course_name, subject, days, start_time, end_time } = req.body;
+
+  if (!course_name || !subject || !days || !start_time || !end_time) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    const connection = await createConnection();
+
+    // Ensure the class belongs to this user
+    const [checkRows] = await connection.execute(
+      'SELECT id FROM classes WHERE id = ? AND user_email = ?',
+      [id, req.user.email]
+    );
+
+    if (!checkRows || checkRows.length === 0) {
+      await connection.end();
+      return res.status(404).json({ message: 'Class not found.' });
+    }
+
+    await connection.execute(
+      'UPDATE classes SET course_name = ?, subject = ?, days = ?, start_time = ?, end_time = ? WHERE id = ?',
+      [course_name, subject, days, start_time, end_time, id]
+    );
+
+    // Return the updated record (same fields as GET /api/classes, no position)
+    const [rows] = await connection.execute(
+      'SELECT id, course_name, subject, days, ' +
+      'TIME_FORMAT(start_time, "%H:%i") AS start_time, ' +
+      'TIME_FORMAT(end_time, "%H:%i") AS end_time ' +
+      'FROM classes WHERE id = ?',
+      [id]
+    );
+    await connection.end();
+
+    res.json({ class: rows[0] });
+  } catch (err) {
+    console.error('PUT /api/classes/:id error', err);
+    res.status(500).json({ message: 'Error updating class.' });
+  }
+});
+
+// Delete class
+app.delete('/api/classes/:id', authenticateToken, async (req, res) => {
+  const id = req.params.id;
+  try {
+    const connection = await createConnection();
+    // Ensure ownership
+    const [check] = await connection.execute('SELECT id FROM classes WHERE id = ? AND user_email = ?', [id, req.user.email]);
+    if (!check || check.length === 0) {
+      await connection.end();
+      return res.status(404).json({ message: 'Class not found.' });
+    }
+    await connection.execute('DELETE FROM classes WHERE id = ? AND user_email = ?', [id, req.user.email]);
+    await connection.end();
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('DELETE /api/classes/:id', err);
+    res.status(500).json({ message: 'Error deleting class.' });
   }
 });
