@@ -13,14 +13,32 @@
       padding: 0 18px;
       color: #e8e8e8;
     }
-    h2 {
-      color: #ffcc33;
-    }
+    h2 { color: #ffcc33; }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
       gap: 20px;
     }
+
+    /* Toggle button appearance (matches your .btn look but behaves like a toggle) */
+    .toggle-btn {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: #e5e7eb;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .18s transform, .18s box-shadow, .18s background;
+      user-select: none;
+    }
+    .toggle-btn[aria-pressed="true"] {
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      transform: translateY(-1px);
+      background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.04));
+    }
+
   </style>
 </head>
 <body>
@@ -33,9 +51,9 @@
     </div>
 
     <nav class="main-nav">
-      <a href="/dashboard.html" class="btn nav-link" role="button">Dashboard</a>
-      <a href="/profile.html" class="btn nav-link" role="button">Profile</a>
-      <a href="/resources.html" class="btn nav-link" role="button">Resources</a>
+      <a href="/dashboard.html" class="nav-link">Dashboard</a>
+      <a href="/profile.html" class="nav-link">Profile</a>
+      <a href="/resources.html" class="nav-link">Resources</a>
     </nav>
 
     <div class="actions">
@@ -49,12 +67,14 @@
         <div class="card-h"><h2>Notifications</h2></div>
         <p>Control in-app/browser notifications and pause during class or exams.</p>
 
-        <label class="row" style="margin-top:8px;">
-          <input type="checkbox" id="notifToggle" />
-          <span>Notifications enabled</span>
-        </label>
+        <!-- Toggle button (replaces the previous checkbox) -->
+        <div style="margin-top:8px;">
+          <button id="notifToggleBtn" class="toggle-btn" aria-pressed="false" type="button">
+            Notifications disabled
+          </button>
+        </div>
 
-        <div class="notif-controls">
+        <div class="notif-controls" style="margin-top:12px;">
           <input type="datetime-local" id="pauseUntilInput" />
           <button id="applyPauseBtn" type="button" class="btn">Pause until</button>
           <button id="clearPauseBtn" type="button" class="btn">Clear pause</button>
