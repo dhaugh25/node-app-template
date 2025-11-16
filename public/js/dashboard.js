@@ -3,8 +3,6 @@ document.addEventListener('DOMContentLoaded', main);
 
 function main() {
   // DOM elements (match your dashboard.html IDs)
-  const refreshButton = document.getElementById('refreshButton');
-  const notifyToggleBtn = document.getElementById('notifToggleBtn');
   const logoutButton = document.getElementById('logoutButton');
 
   const classForm = document.getElementById('classForm');
@@ -33,17 +31,7 @@ function main() {
   DataModel.setToken(token);
 
   // Wire header buttons
-  refreshButton?.addEventListener('click', async (e) => { e.preventDefault(); await loadAndRenderClasses(); });
   logoutButton?.addEventListener('click', () => { localStorage.removeItem('jwtToken'); sessionStorage.removeItem('jwtToken'); window.location.href = '/'; });
-  notifyToggleBtn?.addEventListener('click', async () => {
-    if (typeof enableNotifications === 'function') {
-      const ok = await enableNotifications();
-      notifyToggleBtn.textContent = ok ? 'Disable Notifications' : 'Enable Notifications';
-    } else {
-      const cur = notifyToggleBtn.textContent || '';
-      notifyToggleBtn.textContent = cur === 'Enable Notifications' ? 'Disable Notifications' : 'Enable Notifications';
-    }
-  });
 
   // Form submit: add or update
   classForm?.addEventListener('submit', async (ev) => {

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Study Resources | CourseConnect</title>
+  <link rel="icon" href="/images/sparky.png" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <style>
+    /* ---------- Resource Page Specific ---------- */
+    main.content {
+      max-width: 1100px;
+      margin: 28px auto;
+      padding: 0 18px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #f0f0f0;
+    }
+
+    .filters {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .filters input {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: #0f172a;
+      color: #e5e7eb;
+      outline: none;
+      width: 200px;
+    }
+
+    .filters button {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: #e5e7eb;
+      cursor: pointer;
+      transition: .18s transform, .18s box-shadow, .18s background;
+    }
+    .filters button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card h3 { color: #ffcc33; }
+    .card p { color: #d8d8d8; }
+    .card a { color: #66b2ff; font-weight: 500; }
+    .card a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <!-- Unified top bar -->
+  <header class="sitebar">
+    <div class="brand">
+      <img src="/images/sparky.png" alt="CourseConnect" />
+      <span>CourseConnect</span>
+      <span class="kicker">Resources</span>
+    </div>
+
+    <nav class="main-nav">
+      <a href="/dashboard.html" class="btn nav-link" role="button">Dashboard</a>
+      <a href="/profile.html" class="btn nav-link" role="button">Profile</a>
+      <a href="/resources.html" class="btn nav-link" role="button">Resources</a>
+    </nav>
+
+    <div class="actions">
+      <button id="logoutButton" class="btn warn">Log Out</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <h2>University Study Resources</h2>
+
+    <!-- Search + Filter -->
+    <div class="filters">
+      <input type="text" placeholder="Search resources..." />
+      <button class="btn ghost">Tutoring</button>
+      <button class="btn ghost">Workshops</button>
+      <button class="btn ghost">Peer Groups</button>
+      <button class="btn ghost">All</button>
+    </div>
+
+    <div class="resource-grid">
+      <div class="card">
+        <h3>Tutoring Center</h3>
+        <p>Find tutoring support for math, science, and writing courses. Book sessions with university tutors.</p>
+        <a href="#">View Schedule →</a>
+      </div>
+
+      <div class="card">
+        <h3>Writing Center</h3>
+        <p>Get feedback on essays, projects, and research papers. Walk-in and online sessions available.</p>
+        <a href="#">Book Appointment →</a>
+      </div>
+
+      <div class="card">
+        <h3>STEM Help Desk</h3>
+        <p>Drop-in hours for assistance with calculus, physics, and computer science assignments.</p>
+        <a href="#">See Drop-In Times →</a>
+      </div>
+
+      <div class="card">
+        <h3>Academic Success Workshops</h3>
+        <p>Weekly workshops on time management, study habits, and exam preparation skills.</p>
+        <a href="#">Register for Workshop →</a>
+      </div>
+
+      <div class="card">
+        <h3>Peer Study Groups</h3>
+        <p>Connect with classmates and form study groups for your current courses.</p>
+        <a href="#">Join a Study Group →</a>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast">Saved</div>
+
+  <script>
+    // Logout handling
+    document.querySelector('#logoutButton')?.addEventListener('click', () => {
+      localStorage.removeItem('jwtToken');
+      sessionStorage.removeItem('jwtToken');
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>
