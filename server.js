@@ -3,6 +3,8 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const resourceRoutes = require('./resources');
+
 
 const app = express();
 const port = 3000;
@@ -270,6 +272,9 @@ app.put('/api/notifications/prefs', authenticateToken, async (req, res) => {
 app.locals.notificationsAllowed = notificationsAllowed;
 // =======================================================================
 
+
+// Resources feature
+app.use('/resources', resourceRoutes);
 
 
 // Start the server
