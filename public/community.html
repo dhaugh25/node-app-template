@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CourseConnect • Community</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/images/sparky.png" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <style>
+    main.community {
+      max-width: 1100px;
+      margin: 28px auto;
+      padding: 0 18px;
+      color: #e5e7eb;
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      main.community {
+        grid-template-columns: 1fr;
+      }
+    }
+    .section-title {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .pill {
+      display:inline-flex;
+      align-items:center;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.6);
+      font-size:12px;
+      color:#e5e7eb;
+    }
+    .friend-card {
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(148,163,184,.3);
+      background: radial-gradient(circle at top left, rgba(248,250,252,.06), rgba(15,23,42,1));
+    }
+    .friend-card + .friend-card { margin-top:8px; }
+    .friend-card .top {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .friend-card h3 {
+      margin:0;
+      font-size:0.98rem;
+      color:#f9fafb;
+    }
+    .friend-card .meta {
+      font-size:0.8rem;
+      color:#cbd5e1;
+    }
+    .friend-card .bio {
+      font-size:0.8rem;
+      color:#94a3b8;
+    }
+    .friend-card .actions {
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      margin-top:4px;
+    }
+    .tag {
+      font-size:0.75rem;
+      color:#e5e7eb;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.6);
+    }
+    .tag.friends { border-color:#4ade80; color:#bbf7d0; }
+    .tag.pending { border-color:#fbbf24; color:#facc15; }
+  </style>
+</head>
+<body>
+  <header class="sitebar">
+    <div class="brand">
+      <img src="/images/sparky.png" alt="CourseConnect" />
+      <span>CourseConnect</span>
+      <span class="kicker">Community</span>
+    </div>
+
+    <nav class="main-nav">
+      <a href="/dashboard.html" class="nav-link">Dashboard</a>
+      <a href="/profile.html" class="nav-link">Profile</a>
+      <a href="/resources.html" class="nav-link">Resources</a>
+      <a href="/community.html" class="nav-link active">Community</a>
+    </nav>
+
+    <div class="actions">
+      <button id="logoutButton" class="btn warn">Log Out</button>
+    </div>
+  </header>
+
+  <main class="community">
+    <section class="card">
+      <div class="section-title">
+        <h2>My Circle</h2>
+        <span class="pill" id="friendsCount">0 friends</span>
+      </div>
+      <p class="sub">See your current friends and any incoming requests.</p>
+
+      <h3 class="kicker" style="margin-top:10px;">Friends</h3>
+      <div id="friendsList"></div>
+
+      <h3 class="kicker" style="margin-top:14px;">Requests waiting on you</h3>
+      <div id="incomingList"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Campus Community</h2>
+        <span class="pill" id="communityCount">0 students</span>
+      </div>
+      <p class="sub">Browse other CourseConnect users and build your study network.</p>
+
+      <div id="communityList"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast">Saved</div>
+
+  <script src="/js/datamodel.js"></script>
+  <script src="/js/community.js"></script>
+  <script>
+    document.querySelector('#logoutButton')?.addEventListener('click', () => {
+      localStorage.removeItem('jwtToken');
+      sessionStorage.removeItem('jwtToken');
+      localStorage.setItem('logoutMessage', 'You have been logged out.');
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

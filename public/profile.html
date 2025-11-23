@@ -21,8 +21,35 @@
       grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
       gap: 20px;
     }
+
+    .field label {
+      display:block;
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      color:#94a3b8;
+      margin-bottom:4px;
+    }
+    .field .input,
+    .field textarea {
+      width:100%;
+    }
+    .stack {
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .stack .row {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .stack .field {
+      flex:1 1 200px;
+    }
   </style>
 </head>
+
 <body>
   <!-- Unified top bar -->
   <header class="sitebar">
@@ -36,6 +63,7 @@
       <a href="/dashboard.html" class="nav-link">Dashboard</a>
       <a href="/profile.html" class="nav-link">Profile</a>
       <a href="/resources.html" class="nav-link">Resources</a>
+      <a href="/community.html" class="nav-link">Community</a>
     </nav>
 
     <div class="actions">
@@ -64,11 +92,57 @@
         <p id="nextStatus" class="sub" style="margin-top:6px;"></p>
       </article>
 
-      <article class="card half">
-        <div class="card-h"><h2>Account</h2></div>
+            <article class="card half">
+        <div class="card-h"><h2>Student Profile</h2></div>
         <p class="kicker">Basics</p>
-        <p>Linked email and session info (read-only placeholder).</p>
+
+        <form id="profileForm" class="stack">
+          <div class="row">
+            <div class="field">
+              <label for="profileEmail">Email</label>
+              <input id="profileEmail" class="input" type="email" readonly />
+            </div>
+            <div class="field">
+              <label for="profileName">Full name</label>
+              <input id="profileName" class="input" placeholder="Sparky Sun Devil" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="profileMajor">Major</label>
+              <input id="profileMajor" class="input" placeholder="Information Systems" />
+            </div>
+            <div class="field">
+              <label for="profileYear">Year</label>
+              <input id="profileYear" class="input" placeholder="Sophomore" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="profileGpa">GPA</label>
+              <input id="profileGpa" class="input" type="number" step="0.01" min="0" max="4.5" />
+            </div>
+            <div class="field">
+              <label>Classes tracked in CourseConnect</label>
+              <div id="profileClassCount" class="sub">Loading…</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="profileBio">About you</label>
+            <textarea id="profileBio" class="input" rows="3"
+              placeholder="What are you studying, and what are your goals?"></textarea>
+          </div>
+
+          <div class="row" style="justify-content: flex-end; gap:10px;">
+            <span id="profileMsg" class="sub"></span>
+            <button type="submit" class="btn ok">Save Profile</button>
+          </div>
+        </form>
       </article>
+
     </section>
   </main>
 
