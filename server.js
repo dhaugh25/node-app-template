@@ -49,28 +49,65 @@ app.get('/community.html', (req, res) => {
 });
 
 
-// Writing Center form submission
+// Writing request submission (no authentication)
 app.post('/api/writing-request', async (req, res) => {
-  const { name, email, topic, message } = req.body;
-
-  if (!name || !email || !topic || !message) {
-    return res.status(400).json({ message: 'All fields are required.' });
-  }
-
   try {
-    const conn = await createConnection();
-    await conn.execute(
-      'INSERT INTO writing_requests (name, email, topic, message) VALUES (?, ?, ?, ?)',
-      [name, email, topic, message]
-    );
-    await conn.end();
+    const { email, topic, message, urgency } = req.body;
 
-    res.status(201).json({ message: 'Your request has been submitted!' });
+    // Basic validation
+    if (!email || !topic || !message) {
+      return res.status(400).json({ message: 'Email, topic, and message are required.' });
+    }
+
+    const conn = await createConnection();
+
+    await conn.execute(
+      `INSERT INTO writing_requests (email, topic, message, urgency)
+       VALUES (?, ?, ?, ?)`,
+      [email, topic, message, urgency || 'low']
+    );
+
+    await conn.end();
+    res.status(201).json({ message: 'Writing request submitted successfully!' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error submitting your request.' });
+    res.status(500).json({ message: 'Error submitting writing request.' });
   }
 });
+
+
+
+// Get writing requests for logged-in user
+app.get('/api/writing-requests', async (req, res) => {
+  try {
+    const { email } = req.query;  // optionally allow fetching by email
+    const conn = await createConnection();
+
+    let rows;
+    if (email) {
+      [rows] = await conn.execute(
+        `SELECT id, email, topic, message, urgency, created_at
+         FROM writing_requests
+         WHERE email = ?
+         ORDER BY created_at DESC`,
+        [email]
+      );
+    } else {
+      [rows] = await conn.execute(
+        `SELECT id, email, topic, message, urgency, created_at
+         FROM writing_requests
+         ORDER BY created_at DESC`
+      );
+    }
+
+    await conn.end();
+    res.json({ requests: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching writing requests.' });
+  }
+});
+
 
 
 /////////////////////////////////////////////////////

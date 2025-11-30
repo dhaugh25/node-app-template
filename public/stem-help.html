@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STEM Help Desk • CourseConnect</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f8f9fa; color: #333; margin: 0; padding: 0; }
+    header { background-color: #4B6CB7; color: white; padding: 2rem; text-align: center; }
+    header h1 { margin: 0; font-size: 2rem; }
+    header p { margin: 0.5rem 0 0 0; font-size: 1rem; }
+    main { max-width: 900px; margin: 2rem auto; padding: 1rem; }
+    h2 { color: #4B6CB7; margin-bottom: 1rem; border-bottom: 2px solid #4B6CB7; display: inline-block; padding-bottom: 0.25rem; }
+    #search-container { margin-bottom: 1.5rem; }
+    #search-bar { width: 100%; padding: 0.5rem; font-size: 1rem; border-radius: 4px; border: 1px solid #ccc; }
+    details { background-color: white; margin-bottom: 0.5rem; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    summary { font-weight: bold; cursor: pointer; outline: none; }
+    .resources-list a { color: #4B6CB7; text-decoration: none; }
+    .resources-list a:hover { text-decoration: underline; }
+    form { background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-top: 2rem; }
+    form label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+    form input, form textarea { width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+    form button { background-color: #4B6CB7; color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: 4px; cursor: pointer; }
+    form button:hover { background-color: #3a539b; }
+    #form-message { margin-top: 1rem; font-weight: bold; }
+    .back-link { display: inline-block; margin: 1rem 0; text-decoration: none; color: #0056b3; font-weight: bold; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <a href="/resources.html" class="back-link">&larr; Back to Resources</a>
+
+  <header>
+    <h1>STEM Help Desk</h1>
+    <p>Find help in Math, Physics, Chemistry, Computer Science, and more.</p>
+  </header>
+
+  <main>
+    <!-- Search bar -->
+    <div id="search-container">
+      <input type="text" id="search-bar" placeholder="Search FAQs...">
+    </div>
+
+    <!-- FAQ section -->
+    <section id="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>How do I solve differential equations?</summary>
+        <p>Check out the <a href="https://tutorial.math.lamar.edu/Classes/DE/DE.aspx" target="_blank">Differential Equations tutorials</a> online. You can also visit the Math Lab for one-on-one help.</p>
+      </details>
+
+      <details>
+        <summary>How do I balance chemical equations?</summary>
+        <p>Start by listing the number of atoms for each element on both sides of the equation. Balance elements that appear in only one reactant and one product first. Leave hydrogen and oxygen for last since they often appear in multiple compounds. Adjust coefficients—not subscripts—until both sides have the same number of each atom.</p>
+      </details>
+
+      <details>
+        <summary>Where can I get coding help for CS classes?</summary>
+        <p>Check your course's GitHub, Discord, or Canvas pages for peer coding sessions. Many professors also host office hours or Piazza threads specifically for coding questions.</p>
+      </details>
+
+      <details>
+        <summary>How do I cite sources for lab reports?</summary>
+        <p>Use MLA, APA, or IEEE depending on your class guidelines. Check the <a href="https://owl.purdue.edu/owl/research_and_citation/mla_style/mla_formatting_and_style_guide/" target="_blank">MLA guide</a> or <a href="https://owl.purdue.edu/owl/research_and_citation/apa_style/apa_formatting_and_style_guide/" target="_blank">APA guide</a>.</p>
+      </details>
+
+      <details>
+        <summary>How do I approach engineering research?</summary>
+        <p>Check out the <a href="https://engineering.asu.edu/research/" target="_blank">Engineering Research page</a> for guidance on research projects, faculty labs, and student opportunities.</p>
+      </details>
+
+      <details>
+        <summary>How do I prepare for lab experiments?</summary>
+        <p>Review your lab manual, pre-read experiment instructions, and consult your TA or lab instructor with any questions before the session. For extra help, ask peers or visit the relevant help center for your discipline.</p>
+      </details>
+
+      <details>
+        <summary>How can I get involved in STEM student organizations?</summary>
+        <p>Look for student clubs and organizations on <a href="https://eoss.asu.edu/clubs" target="_blank">ASU Clubs Directory</a> or check with your college's student services office. Many groups offer tutoring, workshops, and peer mentoring in STEM fields.</p>
+      </details>
+    </section>
+
+    <!-- Quick Resources -->
+    <section>
+      <h2>Quick Resources</h2>
+      <ul class="resources-list">
+        <li><a href="https://math.asu.edu/resources/math-tutoring-center" target="_blank">Math Tutoring</a></li>
+        <li><a href="https://physics.asu.edu/resources/student-success-center" target="_blank">Physics Tutoring</a></li>
+        <li><a href="https://engineering.asu.edu/research/" target="_blank">Engineering Research</a></li>
+      </ul>
+    </section>
+
+    <!-- Contact Form -->
+    <section>
+      <h2>Request Additional Help</h2>
+      <form id="stem-help-form">
+        <label for="email">Your ASU Email</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="topic">Topic / Course</label>
+        <input type="text" id="topic" name="topic" placeholder="e.g., Calculus II, Physics 101" required>
+
+        <label for="message">Describe your need</label>
+        <textarea id="message" name="message" rows="4" required></textarea>
+
+        <button type="submit">Submit Request</button>
+        <p id="form-message"></p>
+      </form>
+    </section>
+
+  </main>
+
+  <script>
+    // FAQ search filter
+    const searchBar = document.getElementById('search-bar');
+    const faqSection = document.getElementById('faq-section');
+    const faqs = faqSection.querySelectorAll('details');
+
+    searchBar.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      faqs.forEach(faq => {
+        const summaryText = faq.querySelector('summary').textContent.toLowerCase();
+        const detailsText = faq.querySelector('p').textContent.toLowerCase();
+        faq.style.display = (summaryText.includes(term) || detailsText.includes(term)) ? '' : 'none';
+      });
+    });
+
+    // Form submission
+    const stemForm = document.getElementById('stem-help-form');
+    const formMessage = document.getElementById('form-message');
+
+    stemForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const topic = document.getElementById('topic').value;
+      const message = document.getElementById('message').value;
+
+      try {
+        const response = await fetch('/api/writing-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, topic, message }),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          formMessage.textContent = result.message;
+          formMessage.style.color = 'green';
+          stemForm.reset();
+        } else {
+          formMessage.textContent = result.message || 'Submission failed.';
+          formMessage.style.color = 'red';
+        }
+      } catch (err) {
+        console.error(err);
+        formMessage.textContent = 'An error occurred. Try again later.';
+        formMessage.style.color = 'red';
+      }
+    });
+  </script>
+
+</body>
+</html>
