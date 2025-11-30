@@ -1,95 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>CourseConnect — Dashboard</title>
-<link rel="icon" href="/images/sparky.png" />
-<link rel="stylesheet" href="/css/dashboard.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CourseConnect — Dashboard</title>
+  <link rel="icon" href="/images/sparky.png" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
 <body>
-<!-- Top bar -->
-<header class="sitebar">
-<div class="brand">
-<img src="/images/sparky.png" alt="CourseConnect" />
-<span>CourseConnect</span>
-<span class="kicker">Dashboard</span>
-</div>
+  <!-- Top bar -->
+  <header class="sitebar">
+    <div class="brand">
+      <img src="/images/sparky.png" alt="CourseConnect" />
+      <span>CourseConnect</span>
+      <span class="kicker">Dashboard</span>
+    </div>
 
+    <!-- Navigation links -->
+    <nav class="main-nav">
+      <a href="/dashboard.html" class="nav-link active">Dashboard</a>
+      <a href="/profile.html" class="nav-link">Profile</a>
+      <a href="/resources.html" class="nav-link">Resources</a>
+      <a href="/community.html" class="nav-link">Community</a>
+    </nav>
 
-<!-- Navigation links -->
-<nav class="main-nav">
-<a href="/dashboard.html" class="nav-link active">Dashboard</a>
-<a href="/profile.html" class="nav-link">Profile</a>
-<a href="/resources.html" class="nav-link">Resources</a>
-<a href="/community.html" class="nav-link">Community</a>
-</nav>
+    <!-- Dashboard-specific buttons -->
+    <div class="actions">
+      <!-- refresh + notifications removed from UI, but JS tolerates missing IDs -->
+      <button id="logoutButton" class="btn warn">Log Out</button>
+    </div>
+  </header>
 
+  <main class="container">
+    <!-- LEFT COLUMN -->
+    <section class="card">
+      <h2>Study Planner</h2>
+      <p class="sub">Add your classes and keep them in view.</p>
 
-<!-- Dashboard-specific buttons (Refresh + Notifications removed) -->
-<div class="actions">
-<button id="logoutButton" class="btn warn">Log Out</button>
-</div>
-</header>
+      <!-- CLASS FORM -->
+      <form id="classForm">
+        <div class="form-grid">
+          <input class="input" id="course_name" placeholder="Course name (e.g., CIS 440)" required />
+          <input class="input" id="subject" placeholder="Subject (e.g., Info Systems)" required />
+          <select id="days" class="input" required>
+            <option value="">Days</option>
+            <option>M/W/F</option>
+            <option>T/Th</option>
+            <option>M/T/W/Th/F</option>
+            <option>iCourse</option>
+          </select>
+          <div class="row" style="gap:10px">
+            <input class="input" id="start_time" type="time" required/>
+            <input class="input" id="end_time" type="time" required/>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn ok" type="submit">Add Class</button>
+          <span id="classMsg" class="sub"></span>
+        </div>
+      </form>
 
+      <table class="table" id="classesTable">
+        <thead>
+          <tr>
+            <th>Course</th><th>Subject</th><th>Days</th><th>Start</th><th>End</th>
+          </tr>
+        </thead>
+        <tbody id="classesBody"></tbody>
+      </table>
+    </section>
 
-<main class="container">
-<!-- Left: Study System / Classes -->
-<section class="card">
-<h2>Study Planner</h2>
-<p class="sub">Add your classes and keep them in view.</p>
+    <!-- MIDDLE COLUMN: Calendar + Assignments -->
+    <section class="card" id="calendar-card">
+      <h2>Calendar</h2>
+      <div id="calendar-controls">
+        <button id="cal-prev">&lt;</button>
+        <span id="cal-month-year"></span>
+        <button id="cal-next">&gt;</button>
+      </div>
+      <table id="calendar-table">
+        <thead>
+          <tr>
+            <th>Sun</th>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th>Sat</th>
+          </tr>
+        </thead>
+        <tbody id="calendar-body">
+          <!-- Filled by JS -->
+        </tbody>
+      </table>
+      <p style="font-size:0.8rem; margin-top:0.5rem;">
+        <span style="font-weight:bold;">•</span> Days with assignments are highlighted.
+      </p>
+    </section>
 
+    <section class="card" id="assignments-card">
+      <h2>Upcoming Assignments</h2>
 
-<form id="classForm">
-<div class="form-grid">
-<input class="input" id="course_name" placeholder="Course name (e.g., CIS 440)" required />
-<input class="input" id="subject" placeholder="Subject (e.g., Info Systems)" required />
-<select id="days" class="input" required>
-<option value="">Days</option>
-<option>M/W/F</option><option>T/Th</option><option>M/T/W/Th/F</option><option>iCourse</option>
-</select>
-<div class="row" style="gap:10px">
-<input class="input" id="start_time" type="time" required/>
-<input class="input" id="end_time" type="time" required/>
-</div>
-</div>
-<div class="row">
-<button class="btn ok" type="submit">Add Class</button>
-<span id="classMsg" class="sub"></span>
-</div>
-</form>
+      <form id="assignment-form">
+        <div class="form-row">
+          <label for="assignment-title">Title</label>
+          <input type="text" id="assignment-title" required placeholder="Quiz 3, Project draft, ..." />
+        </div>
+        <div class="form-row">
+          <label for="assignment-course">Course</label>
+          <input type="text" id="assignment-course" placeholder="e.g. CIS 440" />
+        </div>
+        <div class="form-row">
+          <label for="assignment-date">Due date</label>
+          <input type="date" id="assignment-date" required />
+        </div>
+        <div class="form-row">
+          <label for="assignment-notes">Notes</label>
+          <textarea id="assignment-notes" rows="2" placeholder="Optional details"></textarea>
+        </div>
+        <button type="submit">Add Assignment</button>
+      </form>
 
+      <ul id="assignment-list">
+        <!-- Filled by JS -->
+      </ul>
+    </section>
 
-<table class="table" id="classesTable">
-<thead>
-<tr>
-<th>Course</th><th>Subject</th><th>Days</th><th>Start</th><th>End</th>
-</tr>
-</thead>
-<tbody id="classesBody"></tbody>
-</table>
-</section>
+    <!-- RIGHT COLUMN: Study Groups + People -->
+    <section class="card" id="study-groups-card">
+      <h2>Study Groups</h2>
+      <button id="auto-group-btn">Find / Create Groups from My Courses</button>
+      <ul id="study-group-list" style="margin-top:0.75rem;">
+        <!-- Filled by JS -->
+      </ul>
+    </section>
 
+    <aside class="card">
+      <h2>People</h2>
+      <p class="sub">Authorized users in the system.</p>
+      <div id="userList" class="user-list"></div>
+      <hr style="border-color:rgba(255,255,255,.08); margin:14px 0" />
+    </aside>
+  </main>
 
-<!-- Right: People (Notifications removed) -->
-<aside class="card">
-<h2>People</h2>
-<p class="sub">Authorized users in the system.</p>
-<div id="userList" class="user-list"></div>
+  <div id="toast" class="toast">Saved</div>
 
-
-<hr style="border-color:rgba(255,255,255,.08); margin:14px 0" />
-</aside>
-</main>
-
-
-<div id="toast" class="toast">Saved</div>
-
-
-<script src="/js/datamodel.js"></script>
-<script src="/js/dashboard.js" type="module"></script>
-</body>
-</html>
+  <!-- Scripts -->
+  <script src="/js/datamodel.js"></script>
+  <script src="/js/dashboard.js" type="module"></script>
 
   <!-- Service worker + gated Notification helpers -->
   <script type="module">
