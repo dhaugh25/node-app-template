@@ -96,71 +96,78 @@
     <section>
       <h2>Request Additional Help</h2>
       <form id="stem-help-form">
-        <label for="email">Your ASU Email</label>
-        <input type="email" id="email" name="email" required>
+          <label for="stem-email">Your ASU Email</label>
+          <input type="email" id="stem-email" name="email" required>
 
-        <label for="topic">Topic / Course</label>
-        <input type="text" id="topic" name="topic" placeholder="e.g., Calculus II, Physics 101" required>
+          <label for="stem-topic">Topic / Course</label>
+          <input type="text" id="stem-topic" name="topic" placeholder="e.g., Calculus II, Physics 101" required>
 
-        <label for="message">Describe your need</label>
-        <textarea id="message" name="message" rows="4" required></textarea>
+          <label for="stem-message">Describe your need</label>
+          <textarea id="stem-message" name="message" rows="4" required></textarea>
 
-        <button type="submit">Submit Request</button>
-        <p id="form-message"></p>
+          <button type="submit">Submit Request</button>
+          <p id="stem-form-message"></p>
       </form>
     </section>
 
   </main>
 
   <script>
-    // FAQ search filter
-    const searchBar = document.getElementById('search-bar');
-    const faqSection = document.getElementById('faq-section');
-    const faqs = faqSection.querySelectorAll('details');
+  // FAQ search filter (unchanged)
+  const searchBar = document.getElementById('search-bar');
+  const faqSection = document.getElementById('faq-section');
+  const faqs = faqSection.querySelectorAll('details');
 
-    searchBar.addEventListener('input', (e) => {
-      const term = e.target.value.toLowerCase();
-      faqs.forEach(faq => {
-        const summaryText = faq.querySelector('summary').textContent.toLowerCase();
-        const detailsText = faq.querySelector('p').textContent.toLowerCase();
-        faq.style.display = (summaryText.includes(term) || detailsText.includes(term)) ? '' : 'none';
-      });
+  searchBar.addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    faqs.forEach(faq => {
+      const summaryText = faq.querySelector('summary').textContent.toLowerCase();
+      const detailsText = faq.querySelector('p').textContent.toLowerCase();
+      faq.style.display = (summaryText.includes(term) || detailsText.includes(term)) ? '' : 'none';
     });
+  });
 
-    // Form submission
-    const stemForm = document.getElementById('stem-help-form');
-    const formMessage = document.getElementById('form-message');
+  // STEM form submission
+  const stemForm = document.getElementById('stem-help-form');
+  const formMessage = document.getElementById('stem-form-message');
 
-    stemForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
+  stemForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
 
-      const email = document.getElementById('email').value;
-      const topic = document.getElementById('topic').value;
-      const message = document.getElementById('message').value;
+    const email = document.getElementById('stem-email').value;
+    const topic = document.getElementById('stem-topic').value;
+    const message = document.getElementById('stem-message').value;
 
-      try {
-        const response = await fetch('/api/writing-request', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, topic, message }),
-        });
+    try {
+      const response = await fetch('/api/help-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          topic,
+          message,
+          request_type: 'stem' // ensures the request type is correct
+        }),
+      });
 
-        const result = await response.json();
-        if (response.ok) {
-          formMessage.textContent = result.message;
-          formMessage.style.color = 'green';
-          stemForm.reset();
-        } else {
-          formMessage.textContent = result.message || 'Submission failed.';
-          formMessage.style.color = 'red';
-        }
-      } catch (err) {
-        console.error(err);
-        formMessage.textContent = 'An error occurred. Try again later.';
+      const result = await response.json();
+
+      if (response.ok) {
+        formMessage.textContent = result.message; // will now show "Help request submitted!"
+        formMessage.style.color = 'green';
+        stemForm.reset();
+      } else {
+        formMessage.textContent = result.message || 'Submission failed.';
         formMessage.style.color = 'red';
       }
-    });
-  </script>
+    } catch (err) {
+      console.error(err);
+      formMessage.textContent = 'An error occurred. Try again later.';
+      formMessage.style.color = 'red';
+    }
+  });
+</script>
+
 
 </body>
 </html>

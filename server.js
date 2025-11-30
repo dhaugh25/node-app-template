@@ -78,35 +78,31 @@ app.post('/api/writing-request', async (req, res) => {
 
 
 // Get writing requests for logged-in user
-app.get('/api/writing-requests', async (req, res) => {
+app.post('/api/help-request', async (req, res) => {
   try {
-    const { email } = req.query;  // optionally allow fetching by email
-    const conn = await createConnection();
+    const { email, topic, message, request_type } = req.body;
 
-    let rows;
-    if (email) {
-      [rows] = await conn.execute(
-        `SELECT id, email, topic, message, urgency, created_at
-         FROM writing_requests
-         WHERE email = ?
-         ORDER BY created_at DESC`,
-        [email]
-      );
-    } else {
-      [rows] = await conn.execute(
-        `SELECT id, email, topic, message, urgency, created_at
-         FROM writing_requests
-         ORDER BY created_at DESC`
-      );
+    if (!email || !topic || !message || !request_type) {
+      return res.status(400).json({ message: "Missing required fields." });
     }
 
+    const conn = await createConnection();
+
+    await conn.execute(
+      `INSERT INTO writing_requests (email, topic, message, urgency, request_type)
+       VALUES (?, ?, ?, 'low', ?)`,
+      [email, topic, message, request_type]
+    );
+
     await conn.end();
-    res.json({ requests: rows });
+
+    res.status(201).json({ message: "Help request submitted!" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error fetching writing requests.' });
+    res.status(500).json({ message: "Server error." });
   }
 });
+
 
 
 

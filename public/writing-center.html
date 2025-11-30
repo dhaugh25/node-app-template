@@ -195,39 +195,46 @@
   </main>
 
   <script>
-    const writingForm = document.getElementById('writing-form');
-    const writingMessageEl = document.getElementById('form-message');
+  const writingForm = document.getElementById('writing-form');
+  const writingMessageEl = document.getElementById('form-message');
 
-    writingForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
+  writingForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
 
-      const name = document.getElementById('writing-name').value;
-      const email = document.getElementById('writing-email').value;
-      const topic = document.getElementById('writing-topic').value;
-      const message = document.getElementById('writing-message-text').value;
+    const name = document.getElementById('writing-name').value;
+    const email = document.getElementById('writing-email').value;
+    const topic = document.getElementById('writing-topic').value;
+    const message = document.getElementById('writing-message-text').value;
 
-      try {
-        const response = await fetch('/api/writing-request', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, topic, message }),
-        });
+    try {
+      const response = await fetch('/api/help-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          topic,
+          message,
+          request_type: 'writing'   // 👈 important
+        }),
+      });
 
-        const result = await response.json();
-        if (response.ok) {
-          writingMessageEl.textContent = result.message;
-          writingMessageEl.className = 'success';
-          writingForm.reset();
-        } else {
-          writingMessageEl.textContent = result.message || 'Submission failed';
-          writingMessageEl.className = 'error';
-        }
-      } catch (err) {
-        console.error(err);
-        writingMessageEl.textContent = 'An error occurred. Try again later.';
+      const result = await response.json();
+      if (response.ok) {
+        writingMessageEl.textContent = result.message;
+        writingMessageEl.className = 'success';
+        writingForm.reset();
+      } else {
+        writingMessageEl.textContent = result.message || 'Submission failed';
         writingMessageEl.className = 'error';
       }
-    });
-  </script>
+    } catch (err) {
+      console.error(err);
+      writingMessageEl.textContent = 'An error occurred. Try again later.';
+      writingMessageEl.className = 'error';
+    }
+  });
+</script>
+
 </body>
 </html>
