@@ -13,6 +13,62 @@
   --table-border: rgba(255,255,255,.06); /* consistent separators */
 }
 
+/* 1) Prevent page shift when scrollbar appears/disappears */
+html {
+  /* keeps layout stable even if vertical scrollbar appears */
+  scrollbar-gutter: stable;
+}
+
+/* 2) Header layout: keep brand/actions stable so centered nav doesn't jump */
+.sitebar .brand {
+  z-index: 3;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  min-width: 0;
+}
+
+.sitebar .actions {
+  margin-left: auto;
+  z-index: 3;
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* Avoid forcing a big reserved width for actions — use padding instead */
+.sitebar .actions > * {
+  min-width: 0;        /* allow buttons to shrink moderately */
+}
+
+/* nav stays centered and will shrink if absolutely necessary */
+.sitebar nav {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  z-index: 2;               /* below brand/actions but above page content */
+  pointer-events: auto;     /* keep links clickable */
+  white-space: nowrap;
+}
+
+/* keep nav buttons from reflowing (already applied earlier) */
+.nav-link { white-space: nowrap; }
+
+/* responsive fallback: allow nav scroll on very small screens */
+@media (max-width: 720px) {
+  .sitebar nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -26,18 +82,63 @@ body{
 }
 
 /* ---------- App Shell ---------- */
-.sitebar{
-  position:sticky; top:0; z-index:50;
-  display:flex; align-items:center; gap:.75rem;
-  padding:14px 20px;
-  background: color-mix(in oklab, #0b1020 92%, #000);
-  border-bottom:1px solid rgba(255,255,255,.05);
-  backdrop-filter: blur(8px);
+.sitebar {
+  position: relative; /* already sticky; make sure it's relative for absolute centering */
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: 14px 20px;
 }
 .brand{ display:flex; align-items:center; gap:.6rem; font-weight:800; letter-spacing:.2px; }
 .brand img{width:26px; height:26px; border-radius:6px}
 .brand span{font-size:15px}
-.sitebar nav{margin-left:auto; display:flex; gap:.5rem}
+.sitebar nav {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  z-index: 2;               /* below brand/actions but above page content */
+  pointer-events: auto;     /* keep links clickable */
+  white-space: nowrap;
+}
+
+/* Ensure actions stay at the far right */
+.sitebar .actions {
+  margin-left: auto;
+  z-index: 3;
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* Nav links: prevent wrapping and allow horizontal scroll on tiny screens */
+.nav-link {
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  color: white !important;
+  background: linear-gradient(135deg, var(--brand), #7c3aed);
+  border: 1px solid rgba(255,255,255,.08);
+  transition: .18s transform, .18s box-shadow;
+  white-space: nowrap;
+}
+
+/* On very small widths, allow the nav to scroll instead of hiding items */
+@media (max-width: 720px) {
+  .sitebar nav {
+    position: relative;           /* fall back to normal flow on tiny screens */
+    left: auto; top: auto; transform: none;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0;
+  }
+}
 .btn{
   padding:8px 12px; border:1px solid rgba(255,255,255,.08); border-radius:10px;
   background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
@@ -348,3 +449,25 @@ body{
 
 /* keep the original in-table .menu-dropdown rules (for fallback) but hidden by default */
 .menu-dropdown { display: none !important; }
+
+/* ---------- Centered Purple Nav Buttons ---------- */
+.nav-link {
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  color: white !important;
+  background: linear-gradient(135deg, var(--brand), #7c3aed);
+  border: 1px solid rgba(255,255,255,.08);
+  transition: .18s transform, .18s box-shadow;
+}
+
+.nav-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+
+.nav-link.active {
+  background: linear-gradient(135deg, #7c3aed, var(--brand));
+  border-color: transparent;
+}
