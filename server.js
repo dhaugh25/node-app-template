@@ -48,6 +48,31 @@ app.get('/community.html', (req, res) => {
   res.sendFile(__dirname + '/public/community.html');
 });
 
+
+// Writing Center form submission
+app.post('/api/writing-request', async (req, res) => {
+  const { name, email, topic, message } = req.body;
+
+  if (!name || !email || !topic || !message) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    const conn = await createConnection();
+    await conn.execute(
+      'INSERT INTO writing_requests (name, email, topic, message) VALUES (?, ?, ?, ?)',
+      [name, email, topic, message]
+    );
+    await conn.end();
+
+    res.status(201).json({ message: 'Your request has been submitted!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error submitting your request.' });
+  }
+});
+
+
 /////////////////////////////////////////////////////
 // DB CONNECTION + AUTH MIDDLEWARE
 /////////////////////////////////////////////////////
