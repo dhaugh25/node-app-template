@@ -596,6 +596,80 @@ app.delete('/api/classes/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ---------- TUTORING SLOTS API ----------
+/**
+ * Tutoring slot object:
+ * { id, user_email, course_name, subject, days, start_time (HH:MM:SS), end_time (HH:MM:SS), details, created_at }
+ */
+
+// List all tutoring slots (visible to authenticated users)
+app.get('/api/tutors', authenticateToken, async (req, res) => {
+  try {
+    const conn = await createConnection();
+    const [rows] = await conn.execute(
+      `SELECT ts.*, u.full_name
+       FROM tutoring_slots ts
+       LEFT JOIN user u ON u.email = ts.user_email
+       ORDER BY ts.created_at DESC`
+    );
+    await conn.end();
+    res.json({ tutors: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error loading tutoring slots.' });
+  }
+});
+
+// Create a tutoring slot
+app.post('/api/tutors', authenticateToken, async (req, res) => {
+  try {
+    const { course_name, subject, days, start_time, end_time, details } = req.body;
+    if (!course_name || !subject || !days || !start_time || !end_time)
+      return res.status(400).json({ message: 'All fields required.' });
+
+    // optional: validate time strings format HH:MM or HH:MM:SS
+    const conn = await createConnection();
+    await conn.execute(
+      `INSERT INTO tutoring_slots (user_email, course_name, subject, days, start_time, end_time, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.user.email, course_name, subject, days, start_time, end_time, details || null]
+    );
+
+    // return newly created row
+    const [rows] = await conn.execute(
+      `SELECT ts.*, u.full_name
+       FROM tutoring_slots ts
+       LEFT JOIN user u ON u.email = ts.user_email
+       WHERE ts.id = LAST_INSERT_ID()`
+    );
+    await conn.end();
+    res.status(201).json({ slot: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error creating tutoring slot.' });
+  }
+});
+
+// Delete a tutoring slot (owner only)
+app.delete('/api/tutors/:id', authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const conn = await createConnection();
+    const [check] = await conn.execute('SELECT user_email FROM tutoring_slots WHERE id = ?', [id]);
+    if (!check.length) { await conn.end(); return res.status(404).json({ message: 'Not found.' }); }
+    if (check[0].user_email !== req.user.email) {
+      await conn.end();
+      return res.status(403).json({ message: 'Not allowed.' });
+    }
+    await conn.execute('DELETE FROM tutoring_slots WHERE id = ?', [id]);
+    await conn.end();
+    res.json({ message: 'Deleted.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error deleting slot.' });
+  }
+});
+
 /////////////////////////////////////////////////////
 // START SERVER
 /////////////////////////////////////////////////////
