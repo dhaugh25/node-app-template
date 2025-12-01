@@ -480,3 +480,80 @@ body{
   color: #e5e7eb;
 }
 .tutor-card .small { padding:6px 8px; font-size:13px; border-radius:8px; }
+
+.tutor-card {
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Row: info left, actions right */
+.tutor-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Text column */
+.tutor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Title (course + subject) in ONE straight line */
+.tutor-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* Meta line (days + time) */
+.tutor-meta {
+  font-size: .9rem;
+  color: #cbd5e1;
+}
+
+/* Optional notes */
+.tutor-details {
+  font-size: .85rem;
+  color: #94a3b8;
+}
+
+/* Posted by user */
+.tutor-user {
+  font-size: .8rem;
+  color: #64748b;
+}
+
+/* Right side actions */
+.tutor-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* Conflict message */
+.tutor-conflict {
+  margin-top: 4px;
+  color: #ff6b6b;
+  font-weight: 600;
+  font-size: .9rem;
+}
+
+/* small join button sizing */
+.btn.small { padding:6px 8px; font-size:13px; border-radius:8px; }
+
+/* Join count badge */
+.join-count { font-weight:600; }
+
+/* tutor-card adjustments already covered; ensure tutor-conflict color stands out */
+.tutor-conflict { color:#ff6b6b; font-weight:600; }
+
+/* Modal panel (if you want to style globally) */
+#joinersModal .btn { margin-top:12px; }

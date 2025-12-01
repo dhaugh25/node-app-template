@@ -20,9 +20,9 @@
     <nav class="main-nav">
       <a href="/dashboard.html" class="nav-link">Dashboard</a>
       <a href="/profile.html" class="nav-link">Profile</a>
+      <a href="/tutoring.html" class="nav-link active">Tutoring</a>
       <a href="/resources.html" class="nav-link">Resources</a>
       <a href="/community.html" class="nav-link">Community</a>
-      <a href="/tutoring.html" class="nav-link active">Tutoring</a>
     </nav>
 
     <div class="actions">
@@ -30,49 +30,69 @@
     </div>
   </header>
 
-  <!-- Page container uses the same grid layout as other pages -->
-  <main class="container" style="max-width:1100px; margin:28px auto; padding:0 18px;">
-    <section class="card" style="max-width:900px; margin:0 auto 40px; padding:24px;">
-      <h2>Tutoring Slots</h2>
-      <p class="sub">Add tutoring slots and browse slots posted by other students.</p>
+  <main class="container" style="max-width:1100px; margin:28px auto; padding:0 18px;
+      display:grid; grid-template-columns: 1fr 1.1fr; gap:18px;">
 
-      <!-- Tutoring form (uses the same .input and .btn classes) -->
-      <form id="tutorForm" class="stack" style="margin-top:10px;">
-        <div class="field">
-          <label>Course</label>
-          <input id="tutorCourse" class="input" placeholder="Course name (e.g., CIS 440)" required />
-        </div>
-        <div class="field">
-          <label>Subject</label>
-          <input id="tutorSubject" class="input" placeholder="Subject (e.g., Info Systems)" required />
-        </div>
-        <div class="field">
-          <label>Days</label>
-          <input id="tutorDays" class="input" placeholder="M/W/F or T/Th" required />
-        </div>
-        <div class="row">
-          <input id="tutorStart" class="input" type="time" required />
-          <input id="tutorEnd" class="input" type="time" required />
-        </div>
-        <div class="field">
-          <label>Notes (optional)</label>
-          <input id="tutorDetails" class="input" placeholder="Location, online link, topics..." />
-        </div>
-        <div class="row" style="justify-content:flex-end;">
-          <button id="addTutorBtn" class="btn ok" type="submit">Add Slot</button>
-        </div>
-      </form>
+  <!-- LEFT COLUMN: FORM -->
+  <section class="card" style="padding:24px;">
+    <h2>Tutoring Slots</h2>
+    <p class="sub">Add tutoring slots and browse slots posted by other students.</p>
 
-      <hr style="border-color:rgba(255,255,255,.06); margin:12px 0" />
+    <form id="tutorForm" class="stack" style="margin-top:10px;">
+      <div class="field">
+        <label>Course</label>
+        <input id="tutorCourse" class="input" placeholder="Course name (e.g., Info Systems)" required />
+      </div>
+      <div class="field">
+        <label>Subject</label>
+        <input id="tutorSubject" class="input" placeholder="Subject (e.g., CIS 440)" required />
+      </div>
+      <div class="field">
+        <label>Days</label>
+        <input id="tutorDays" class="input" placeholder="M/W/F or T/Th" required />
+      </div>
+      <div class="row">
+        <input id="tutorStart" class="input" type="time" required />
+        <input id="tutorEnd" class="input" type="time" required />
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <input id="tutorDetails" class="input" placeholder="Location, online link, topics..." />
+      </div>
+      <div class="row" style="justify-content:flex-end;">
+        <button id="addTutorBtn" class="btn ok" type="submit">Add Slot</button>
+      </div>
+    </form>
+  </section>
 
-      <div id="tutorsList" style="display:flex; flex-direction:column; gap:10px;"></div>
-    </section>
-  </main>
+
+  <!-- RIGHT COLUMN: TUTORING SLOTS -->
+  <aside class="card" style="padding:24px;">
+    <h2>Available Tutoring Slots</h2>
+    <p class="sub">Slots posted by you and other students.</p>
+
+    <div id="tutorsList"
+         style="display:flex; flex-direction:column; gap:14px; margin-top:10px;">
+    </div>
+  </aside>
+
+</main>
 
   <div id="toast" class="toast">Saved</div>
 
   <!-- Shared data model + tutoring script -->
   <script src="/js/datamodel.js"></script>
   <script src="/js/tutoring.js"></script>
+
+  <script>
+  // make logout consistent across pages
+  document.getElementById('logoutButton')?.addEventListener('click', () => {
+    localStorage.removeItem('jwtToken');
+    sessionStorage.removeItem('jwtToken');
+    // Optional: show a message on the login page
+    try { localStorage.setItem('logoutMessage', 'You have been logged out.'); } catch(e){}
+    window.location.href = '/';
+  });
+</script>
 </body>
 </html>
