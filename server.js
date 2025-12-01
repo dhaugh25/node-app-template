@@ -576,6 +576,204 @@ app.get('/api/assignments', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Error fetching assignments' });
   }
 });
+// ---------- TUTORING SLOTS API ----------
+/**
+ * Tutoring slot object:
+ * { id, user_email, course_name, subject, days, start_time (HH:MM:SS), end_time (HH:MM:SS), details, created_at }
+ */
+
+// List all tutoring slots (visible to authenticated users)
+app.get('/api/tutors', authenticateToken, async (req, res) => {
+  try {
+    const conn = await createConnection();
+
+    // 1) load user's classes
+    const [myClassesRows] = await conn.execute(
+      `SELECT course_name, subject
+       FROM classes
+       WHERE user_email = ?`,
+      [req.user.email]
+    );
+
+    // unique arrays for course names and subjects
+    const courseNames = [...new Set((myClassesRows || []).map(r => r.course_name).filter(Boolean))];
+    const subjects = [...new Set((myClassesRows || []).map(r => r.subject).filter(Boolean))];
+
+    let tutors = [];
+    let onlyMine = false;
+
+    if (!courseNames.length && !subjects.length) {
+      // user has no classes — return only their own slots
+      const [mine] = await conn.execute(
+        `SELECT ts.*, u.full_name
+         FROM tutoring_slots ts
+         LEFT JOIN user u ON u.email = ts.user_email
+         WHERE ts.user_email = ?
+         ORDER BY ts.created_at DESC`,
+        [req.user.email]
+      );
+      tutors = mine;
+      onlyMine = true;
+    } else {
+      // Build parameterized query to match by course_name OR subject, include user's own slots always
+      // We'll create placeholders for the IN() clauses
+      const params = [];
+      const coursePlaceholders = courseNames.length ? courseNames.map(()=>'?').join(',') : null;
+      const subjPlaceholders = subjects.length ? subjects.map(()=>'?').join(',') : null;
+
+      let whereParts = [];
+      // include user's own slots
+      whereParts.push('ts.user_email = ?');
+      params.push(req.user.email);
+
+      if (coursePlaceholders) {
+        whereParts.push(`ts.course_name IN (${coursePlaceholders})`);
+        params.push(...courseNames);
+      }
+      if (subjPlaceholders) {
+        whereParts.push(`ts.subject IN (${subjPlaceholders})`);
+        params.push(...subjects);
+      }
+
+      // final SQL
+      const sql = `
+        SELECT ts.*, u.full_name
+        FROM tutoring_slots ts
+        LEFT JOIN user u ON u.email = ts.user_email
+        WHERE (${whereParts.join(' OR ')})
+        ORDER BY ts.created_at DESC
+      `;
+
+      const [rows] = await conn.execute(sql, params);
+      tutors = rows;
+      onlyMine = false;
+    }
+
+    await conn.end();
+    res.json({ tutors, onlyMine });
+  } catch (err) {
+    console.error('GET /api/tutors error:', err);
+    res.status(500).json({ message: 'Error loading tutoring slots.' });
+  }
+});
+
+// Create a tutoring slot
+app.post('/api/tutors', authenticateToken, async (req, res) => {
+  try {
+    const { course_name, subject, days, start_time, end_time, details } = req.body;
+    if (!course_name || !subject || !days || !start_time || !end_time)
+      return res.status(400).json({ message: 'All fields required.' });
+
+    // optional: validate time strings format HH:MM or HH:MM:SS
+    const conn = await createConnection();
+    await conn.execute(
+      `INSERT INTO tutoring_slots (user_email, course_name, subject, days, start_time, end_time, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.user.email, course_name, subject, days, start_time, end_time, details || null]
+    );
+
+    // return newly created row
+    const [rows] = await conn.execute(
+      `SELECT ts.*, u.full_name
+       FROM tutoring_slots ts
+       LEFT JOIN user u ON u.email = ts.user_email
+       WHERE ts.id = LAST_INSERT_ID()`
+    );
+    await conn.end();
+    res.status(201).json({ slot: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error creating tutoring slot.' });
+  }
+});
+
+// Delete a tutoring slot (owner only)
+app.delete('/api/tutors/:id', authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const conn = await createConnection();
+    const [check] = await conn.execute('SELECT user_email FROM tutoring_slots WHERE id = ?', [id]);
+    if (!check.length) { await conn.end(); return res.status(404).json({ message: 'Not found.' }); }
+    if (check[0].user_email !== req.user.email) {
+      await conn.end();
+      return res.status(403).json({ message: 'Not allowed.' });
+    }
+    await conn.execute('DELETE FROM tutoring_slots WHERE id = ?', [id]);
+    await conn.end();
+    res.json({ message: 'Deleted.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error deleting slot.' });
+  }
+});
+
+// GET joiners for a slot
+app.get('/api/tutors/:id/joins', authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const conn = await createConnection();
+    const [rows] = await conn.execute(
+      `SELECT j.user_email, j.joined_at, u.full_name
+       FROM tutoring_slot_joins j
+       LEFT JOIN user u ON u.email = j.user_email
+       WHERE j.slot_id = ?
+       ORDER BY j.joined_at ASC`,
+      [id]
+    );
+    await conn.end();
+    res.json({ joins: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to load joiners.' });
+  }
+});
+
+// POST join a slot
+app.post('/api/tutors/:id/join', authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const email = req.user.email;
+    const conn = await createConnection();
+
+    // ensure slot exists
+    const [slot] = await conn.execute('SELECT id FROM tutoring_slots WHERE id = ?', [id]);
+    if (!slot.length) { await conn.end(); return res.status(404).json({ message: 'Slot not found' }); }
+
+    // idempotent: don't insert duplicate
+    await conn.execute(
+      `INSERT IGNORE INTO tutoring_slot_joins (slot_id, user_email) VALUES (?, ?)`,
+      [id, email]
+    );
+
+    // optionally return current join count
+    const [countRows] = await conn.execute('SELECT COUNT(*) AS cnt FROM tutoring_slot_joins WHERE slot_id = ?', [id]);
+    await conn.end();
+    res.json({ joined: true, count: countRows[0].cnt });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to join slot.' });
+  }
+});
+
+// DELETE leave a slot (remove join)
+app.delete('/api/tutors/:id/join', authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const email = req.user.email;
+    const conn = await createConnection();
+    await conn.execute('DELETE FROM tutoring_slot_joins WHERE slot_id = ? AND user_email = ?', [id, email]);
+    const [countRows] = await conn.execute('SELECT COUNT(*) AS cnt FROM tutoring_slot_joins WHERE slot_id = ?', [id]);
+    await conn.end();
+    res.json({ left: true, count: countRows[0].cnt });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to leave slot.' });
+  }
+});
+
+/////////////////////////////////////////////////////
+// START SERVER
+/////////////////////////////////////////////////////
 
 app.post('/api/assignments', authenticateToken, async (req, res) => {
   const { title, course_code, due_date, notes } = req.body;
