@@ -39,14 +39,26 @@
     <p class="sub">Add tutoring slots and browse slots posted by other students.</p>
 
     <form id="tutorForm" class="stack" style="margin-top:10px;">
-      <div class="field">
-        <label>Course</label>
-        <input id="tutorCourse" class="input" placeholder="Course name (e.g., Info Systems)" required />
-      </div>
-      <div class="field">
-        <label>Subject</label>
-        <input id="tutorSubject" class="input" placeholder="Subject (e.g., CIS 440)" required />
-      </div>
+      <!-- Course (select populated by JS) -->
+    <div class="field">
+      <label>Course (code)</label>
+      <select id="tutorCourse" class="input" required>
+        <option value="">— choose a course code —</option>
+        <!-- options inserted by /js/tutoring.js -->
+        <option value="__OTHER__">Other (type below)</option>
+      </select>
+      <input id="tutorCourseOther" class="input" placeholder="Type course code (e.g. CIS 425)" style="display:none; margin-top:8px;" />
+    </div>
+
+    <div class="field">
+      <label>Subject (title)</label>
+      <select id="tutorSubject" class="input" required>
+        <option value="">— choose a subject title —</option>
+        <!-- options inserted by /js/tutoring.js -->
+        <option value="__OTHER__">Other (type below)</option>
+      </select>
+      <input id="tutorSubjectOther" class="input" placeholder="Type subject/title (e.g. Enterprise Web Technologies)" style="display:none; margin-top:8px;" />
+    </div>
       <div class="field">
         <label>Days</label>
         <input id="tutorDays" class="input" placeholder="M/W/F or T/Th" required />

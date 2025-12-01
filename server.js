@@ -595,59 +595,60 @@ app.get('/api/tutors', authenticateToken, async (req, res) => {
       [req.user.email]
     );
 
-    // unique arrays for course names and subjects
-    const courseNames = [...new Set((myClassesRows || []).map(r => r.course_name).filter(Boolean))];
-    const subjects = [...new Set((myClassesRows || []).map(r => r.subject).filter(Boolean))];
+// Normalize helper (JS side) — produce normalized arrays for SQL
+const normalize = s => (s || '').toString().toLowerCase().replace(/[\s\-\_\.]+/g, '');
 
-    let tutors = [];
-    let onlyMine = false;
+// Build normalized lists from user's classes (flip mapping if necessary)
+const courseCodesNorm = Array.from(new Set((myClassesRows || []).map(r => normalize(r.subject)).filter(Boolean))); // course codes (subject -> code)
+const subjectTitlesNorm = Array.from(new Set((myClassesRows || []).map(r => normalize(r.course_name)).filter(Boolean))); // titles
 
-    if (!courseNames.length && !subjects.length) {
-      // user has no classes — return only their own slots
-      const [mine] = await conn.execute(
-        `SELECT ts.*, u.full_name
-         FROM tutoring_slots ts
-         LEFT JOIN user u ON u.email = ts.user_email
-         WHERE ts.user_email = ?
-         ORDER BY ts.created_at DESC`,
-        [req.user.email]
-      );
-      tutors = mine;
-      onlyMine = true;
-    } else {
-      // Build parameterized query to match by course_name OR subject, include user's own slots always
-      // We'll create placeholders for the IN() clauses
-      const params = [];
-      const coursePlaceholders = courseNames.length ? courseNames.map(()=>'?').join(',') : null;
-      const subjPlaceholders = subjects.length ? subjects.map(()=>'?').join(',') : null;
+let tutors = [];
+let onlyMine = false;
 
-      let whereParts = [];
-      // include user's own slots
-      whereParts.push('ts.user_email = ?');
-      params.push(req.user.email);
+if (!courseCodesNorm.length && !subjectTitlesNorm.length) {
+  // user has no classes — return only their own slots
+  const [mine] = await conn.execute(
+    `SELECT ts.*, u.full_name
+     FROM tutoring_slots ts
+     LEFT JOIN user u ON u.email = ts.user_email
+     WHERE ts.user_email = ?
+     ORDER BY ts.created_at DESC`,
+    [req.user.email]
+  );
+  tutors = mine;
+  onlyMine = true;
+} else {
+  const params = [];
+  const coursePlaceholders = courseCodesNorm.length ? courseCodesNorm.map(()=>'?').join(',') : null;
+  const subjPlaceholders = subjectTitlesNorm.length ? subjectTitlesNorm.map(()=>'?').join(',') : null;
 
-      if (coursePlaceholders) {
-        whereParts.push(`ts.course_name IN (${coursePlaceholders})`);
-        params.push(...courseNames);
-      }
-      if (subjPlaceholders) {
-        whereParts.push(`ts.subject IN (${subjPlaceholders})`);
-        params.push(...subjects);
-      }
+  let whereParts = [];
+  // include user's own slots always
+  whereParts.push('ts.user_email = ?');
+  params.push(req.user.email);
 
-      // final SQL
-      const sql = `
-        SELECT ts.*, u.full_name
-        FROM tutoring_slots ts
-        LEFT JOIN user u ON u.email = ts.user_email
-        WHERE (${whereParts.join(' OR ')})
-        ORDER BY ts.created_at DESC
-      `;
+  if (coursePlaceholders) {
+    // normalize DB column by removing spaces/dashes/underscores/dots and lowercasing
+    whereParts.push(`REPLACE(REPLACE(REPLACE(REPLACE(LOWER(ts.course_name),' ','') ,'-',''), '_',''),'.','') IN (${coursePlaceholders})`);
+    params.push(...courseCodesNorm);
+  }
+  if (subjPlaceholders) {
+    whereParts.push(`REPLACE(REPLACE(REPLACE(REPLACE(LOWER(ts.subject),' ','') ,'-',''), '_',''),'.','') IN (${subjPlaceholders})`);
+    params.push(...subjectTitlesNorm);
+  }
 
-      const [rows] = await conn.execute(sql, params);
-      tutors = rows;
-      onlyMine = false;
-    }
+  const sql = `
+    SELECT ts.*, u.full_name
+    FROM tutoring_slots ts
+    LEFT JOIN user u ON u.email = ts.user_email
+    WHERE (${whereParts.join(' OR ')})
+    ORDER BY ts.created_at DESC
+  `;
+
+  const [rows] = await conn.execute(sql, params);
+  tutors = rows;
+  onlyMine = false;
+}
 
     await conn.end();
     res.json({ tutors, onlyMine });

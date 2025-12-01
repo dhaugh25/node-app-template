@@ -883,3 +883,91 @@ aside.card {
 
 /* Modal panel (if you want to style globally) */
 #joinersModal .btn { margin-top:12px; }
+
+.tutor-card.friend-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(148,163,184,.18);
+  background: radial-gradient(circle at top left, rgba(248,250,252,.04), rgba(15,23,42,1));
+  color: #f8fafc;
+  box-shadow: 0 2px 6px rgba(2,6,23,0.18);
+}
+
+/* header area (title + meta on same row) */
+.tutor-card .top {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8px;
+}
+.tutor-card .title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #f8fafc;
+}
+.tutor-card .meta {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+/* details/resume */
+.tutor-card .details {
+  font-size: 0.95rem;
+  color: #d1d5db;
+  margin-top: 2px;
+}
+
+/* posted-by line */
+.tutor-card .posted {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* Conflict message styled like community pending/friendly error */
+.tutor-card .conflict {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 59, 48, 0.06);
+  color: #ffb3b3;
+  font-weight: 700;
+}
+
+/* Actions row like community */
+.tutor-card .actions {
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top: 6px;
+}
+.tutor-card .btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(148,163,184,.16);
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  color: #e6eef8;
+  cursor:pointer;
+  font-weight:600;
+}
+.tutor-card .btn.join {
+  background: linear-gradient(180deg, #34d399, #10b981);
+  color: #012;
+  border: none;
+}
+.tutor-card .btn.delete {
+  background: linear-gradient(180deg, #ffb86b, #ff9f43);
+  color: #1f1f1f;
+  border: none;
+}
+.tutor-card .btn.details {
+  background: rgba(255,255,255,0.02);
+}
+
+/* small responsive tweaks */
+@media (max-width:900px) {
+  .tutor-card.friend-card { padding: 10px; }
+  .tutor-card .title { font-size: 1rem; }
+}
