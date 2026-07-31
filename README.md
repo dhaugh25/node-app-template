@@ -1,22 +1,57 @@
-<!-- # Simple node.js restful api template app
-This is a simple template to get you started creating a web app with a restful api backend that connects to a mySQL database. -->
+# CourseConnect
 
-## Setup
-- open a terminal window and run: npm install
-<!-- - rename .env.example to .env and replace the placeholder values with your database credentials and a key of your choosing (share this information with your team so they can use the same credentials and key) -->
-<!-- - use mySQL Workbench to execute the DDL query found in the user_table_ddl.sql file against your database in order to create the user table needed for the template to run properly -->
-- run the template app from the terminal with: npm run dev
-- navigate to http://localhost:3000 to play with the app!
+CourseConnect is a full-stack web application developed as a senior capstone project at Arizona State University. The application helps students organize coursework, connect with classmates, discover campus resources, and manage their academic schedules in one place.
 
-## Basic Architecture
-- **server.js:** back-end routes that talk to the database.
-- **public/js/datamodel.js:** "model" that is responsible for sending data back and forth between the interface and the server, and for storing and managing data and state on the front end.
-- **public/dashboard.html:** "view" that represents what the user sees and interacts with in the browser.
-- **public/js/dashboard.js:** "controller" that responds to user interactions with the view, works with the model to send and receive data accordingly, and manipulates the DOM to change what the user sees in the view as a result.
+## Technologies
 
-The files listed above are commented fairly extensively and organized with purpose.  The intent is for you to be able to use the existing code as a reference, and easily understand how to add your own code in the right places in order to create new features and therefore build your own app.
+- Node.js
+- Express.js
+- MySQL
+- HTML/CSS/JavaScript
+- JSON Web Tokens (JWT)
+- bcrypt
+- Git/GitHub
 
 ## Features
--MVC pattern for well-organized code
--Salted and hashed password management
--JWT tokens for secure authorization
+
+- User account creation and secure login
+- JWT authentication and protected routes
+- Student dashboard
+- Course management (add, edit, delete classes)
+- Student profile management
+- Campus resources page
+- Community/friend request system
+- Browser notifications
+- MySQL database integration
+
+## My Contributions
+
+As part of a five-person senior capstone team, I primarily contributed:
+
+- Implementing JWT login and authentication
+- Developing the Resources page
+- Database integration and testing
+- Git branch management and code integration
+
+## Architecture
+
+The application follows an MVC architecture.
+
+- **Model:** `public/js/datamodel.js`
+- **View:** HTML pages in `/public`
+- **Controller:** JavaScript controllers in `/public/js`
+- **Backend:** Express API in `server.js`
+- **Database:** MySQL
+
+## Running the Project
+
+```bash
+npm install
+npm run dev
+```
+
+Then navigate to:
+
+```
+http://localhost:3000
+```
